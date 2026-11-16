@@ -223,6 +223,14 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Serve 3D Blueprint Viewer at /blueprint or /blueprint.html
+  if (url.pathname === '/blueprint' || url.pathname === '/blueprint.html') {
+    const bpHtml = fs.readFileSync(path.join(__dirname, 'public', 'blueprint.html'), 'utf-8');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(bpHtml);
+    return;
+  }
+
   // Serve Admin CMS Portal at /admin
   if (url.pathname === '/admin' || url.pathname === '/admin/') {
     const adminHtml = fs.readFileSync(path.join(__dirname, 'public', 'admin.html'), 'utf-8');
