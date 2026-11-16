@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TYPE ONE® Malaysia — Premier Chassis Stable Bar Manufacturer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/globe.gl@2.35.1/dist/globe.gl.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            t1blue: '#0018FF',
+            t1red: '#ED1C24',
+            t1dark: '#0A0F1D',
+          },
+          fontFamily: {
+            heading: ['"Space Grotesk"', 'sans-serif'],
+            sans: ['"Inter"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #FFFFFF;
+      color: #0F172A;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    .map-3d-perspective {
+      perspective: 1100px;
+    }
+    .map-3d-card {
+      transform-style: preserve-3d;
+      transition: transform 0.2s ease-out;
+    }
+    @keyframes dashMove {
+      to { stroke-dashoffset: -32; }
+    }
+    .flight-line {
+      stroke-dasharray: 4 4;
+      animation: dashMove 1.2s linear infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#0018FF] selection:text-white">
+  <div id="app"></div>
+
+  <script>
+    const IMG_VER = Date.now();
+
+    // Real Photographic Installed Chassis Positions (Zero drawn figures — 100% real workshop & factory photography)
+    const REAL_CHASSIS_INSTALLATIONS = [
+      {
+        id: 'full-underbody',
+        code: '01',
+        name: 'Complete Multi-Point Underbody Architecture',
+        position: 'Full Chassis Hoist View',
+        spec: 'Registered Industrial Design • 100% Bolt-On OEM Fitment',
+        photo: 'https://typeone.com.my/wp-content/uploads/2024/04/full-set-car.webp',
+        pinTop: '48%',
+        pinLeft: '50%',
+        desc: 'Engineered and manufactured in-house in Kuala Lumpur. Every TYPE ONE bar bolts directly to factory chassis mounting points—distributing torsional stress evenly across the monocoque with zero cutting or welding.'
+      },
+      {
+        id: 'front-strut',
+        code: '02',
+        name: 'Front Upper Strut Tower Bar',
+        position: 'Upper Suspension Towers',
+        spec: '1.4mm–1.6mm High-Tensile Oval Steel • 4.5mm Laser Brackets',
+        photo: 'https://typeone.com.my/wp-content/uploads/2024/04/front-strut-bar-e1712632625309.webp',
+        pinTop: '24%',
+        pinLeft: '36%',
+        desc: 'Connects the left and right upper suspension strut towers to prevent front-end chassis flex under corner entry and braking forces.'
+      },
+      {
+        id: 'front-lower',
+        code: '03',
+        name: 'Front Lower 4-Point Subframe Brace',
+        position: 'Front Crossmember & Control Arms',
+        spec: '1.6mm Multi-Point Oval Steel • Subframe Triangulation',
+        photo: 'https://typeone.com.my/wp-content/uploads/2024/04/front-lower-bar.webp',
+        pinTop: '34%',
+        pinLeft: '48%',
+        desc: 'Reinforces the lower front subframe crossmember to lock suspension alignment geometry and sharpen steering precision.'
+      },
+      {
+        id: 'middle-lower',
+        code: '04',
+        name: 'Middle Lower Multi-Point Chassis Brace',
+        position: 'Central Floorpan Tunnel',
+        spec: '4-Point / 6-Point Central Chassis Reinforcement',
+        photo: 'https://typeone.com.my/wp-content/uploads/2024/04/middle-lower-bar.webp',
+        pinTop: '56%',
+        pinLeft: '52%',
+        desc: 'Stabilizes the central underbody floorpan against twisting loads between the front cabin and rear axle.'
+      },
+      {
+        id: 'rear-arb',
+        code: '05',
+        name: 'Rear Solid Spring-Steel Anti-Roll Bar',
+        position: 'Rear Suspension Axle',
+        spec: '16mm–28mm Cold-Formed Solid Steel • One-Piece Forged Ends',
+        photo: 'https://typeone.com.my/wp-content/uploads/2024/04/rear-anti-roll-bar.webp',
+        pinTop: '78%',
+        pinLeft: '54%',
+        desc: 'Reduces lateral body roll and vehicle sway during cornering and highway lane changes while retaining full vertical ride comfort.'
+      },
+      {
+        id: 'rear-lower',
+        code: '06',
+        name: 'Rear Lower Subframe Tie Bar',
+        position: 'Rear Trailing Arm & Subframe Mounts',
+        spec: '1.6mm High-Tensile Steel • 4.5mm Stamped Brackets',
+        photo: 'https://typeone.com.my/wp-content/uploads/2024/04/rear-lower-bar-car.webp',
+        pinTop: '84%',
+        pinLeft: '44%',
+        desc: 'Ties the rear suspension subframe mounts together so the rear axle tracks cleanly under cornering loads.'
+      }
+    ];
+
+    // Real Photographic Material Specifications (No drawn SVGs — uses real 4K macro industrial photography)
+    const MATERIAL_SPECS_DATA = [
+      {
+        id: 'strut-oval',
+        category: 'Strut & Lower Bars',
+        title: '1.4mm – 1.6mm High-Tensile Hollow Oval Steel',
+        badge: '1.4–1.6mm Wall',
+        tolerance: 'Screened Wall Uniformity',
+        tensile: 'High-Rigidity Oval Tube Profile',
+        photo: `/assets/strut-1.png?v=${IMG_VER}`,
+        secondaryPhoto: `/assets/strut-4.png?v=${IMG_VER}`,
+        summary: 'All raw steel tubes are screened prior to production. Our strut and lower bars utilize 1.4mm to 1.6mm wall high-tensile hollow oval steel tubing—providing superior resistance to bending moments while maintaining slim engine bay and ground clearance.'
+      },
+      {
+        id: 'solid-arb',
+        category: 'Solid Anti-Roll Bars',
+        title: '16mm – 28mm Cold-Formed Solid Spring Steel',
+        badge: '16–28mm Solid',
+        tolerance: '100% Solid Core Steel',
+        tensile: '950°C Induction-Forged Ends',
+        photo: `/assets/arb-1.png?v=${IMG_VER}`,
+        secondaryPhoto: `/assets/arb-3.png?v=${IMG_VER}`,
+        summary: 'Unlike hollow sway bars that can fatigue under continuous torsional cycles, TYPE ONE manufactures anti-roll bars exclusively from 16mm to 28mm solid spring steel rods with one-piece thermally forged mounting ends.'
+      },
+      {
+        id: 'laser-bracket',
+        category: 'Mounting Brackets',
+        title: '4.3mm – 4.5mm CNC Laser-Cut Steel Plates',
+        badge: '4.3–4.5mm Plate',
+        tolerance: '100% OEM Bolt-On Fitment',
+        tensile: 'Hydraulic Stamped & TIG Welded',
+        photo: `/assets/strut-2.png?v=${IMG_VER}`,
+        secondaryPhoto: `/assets/strut-3.png?v=${IMG_VER}`,
+        summary: 'Every mounting bracket is precision-cut on CNC fiber lasers from 4.3mm–4.5mm thick steel plates and formed in heavy-tonnage stamping dies, ensuring a secure, zero-weld bolt-on hold at factory chassis points.'
+      }
+    ];
+
+    const PRODUCTION_LINES = {
+      strut: {
+        name: 'Strut Bar Production Process',
+        subtitle: 'Complete in-house manufacturing from raw oval steel tubes & 4.5mm plates to electrostatic epoxy coating',
+        accent: '#0018FF',
+        badge: 'PRODUCTION LINE 01 • STRUT & LOWER BARS',
+        stages: [
+          {
+            step: 1,
+            title: 'Raw Material Screening',
+            short: '1. Raw Material',
+            spec: '1.4mm–1.6mm High-Tensile Oval Tubes',
+            metric: 'Ultrasonic Wall & Grade Verification',
+            img: `/assets/strut-1.png?v=${IMG_VER}`,
+            desc: 'Every batch of hollow steel and oval tubing (1.4mm–1.6mm) and 4.3mm–4.5mm bracket steel plate is inspected for wall uniformity and tensile grade before entering production.'
+          },
+          {
+            step: 2,
+            title: 'CNC Fiber Laser Cutting',
+            short: '2. Laser',
+            spec: '±0.05mm Precision Optical Tolerance',
+            metric: 'Burr-Free OEM Bolt Geometry',
+            img: `/assets/strut-2.png?v=${IMG_VER}`,
+            desc: 'High-wattage CNC fiber lasers cut the 4.5mm mounting plates and tube miters with sub-millimeter precision, ensuring exact alignment with factory chassis bolt holes.'
+          },
+          {
+            step: 3,
+            title: 'Heavy-Tonnage Stamping',
+            short: '3. Stamping',
+            spec: 'Multi-Axis Structural Forming',
+            metric: 'Reinforced Gusset Rigidity',
+            img: `/assets/strut-3.png?v=${IMG_VER}`,
+            desc: 'Laser-cut steel blanks are cold-stamped in heavy hydraulic dies to form 3D mounting brackets that resist flex at the suspension tower junction.'
+          },
+          {
+            step: 4,
+            title: 'CNC Mandrel Tube Bending',
+            short: '4. Bending',
+            spec: 'Zero-Crimp Multi-Radius Bending',
+            metric: 'CAD-Matched Engine & Subframe Clearance',
+            img: `/assets/strut-4.png?v=${IMG_VER}`,
+            desc: 'Oval steel bars are formed on computer-controlled mandrel benders to follow the exact contour of the engine bay or underbody without collapsing the tube wall.'
+          },
+          {
+            step: 5,
+            title: '360° Structural Welding',
+            short: '5. Welding',
+            spec: 'Deep-Penetration TIG / MIG Fusion',
+            metric: 'Jig-Locked Dimensional Accuracy',
+            img: `/assets/strut-5.png?v=${IMG_VER}`,
+            desc: 'Locked inside model-specific steel master jigs, certified welders fuse the oval bar to the 4.5mm end brackets for a single-piece rigid assembly.'
+          },
+          {
+            step: 6,
+            title: 'Chemical Surface Treatment',
+            short: '6. Treatment',
+            spec: 'Multi-Stage Pickling & Phosphating',
+            metric: 'Tropical & Road-Salt Corrosion Shield',
+            img: `/assets/strut-6.png?v=${IMG_VER}`,
+            desc: 'Welded bars undergo chemical degreasing, acid pickling, and zinc-phosphate conversion coating so the primer bonds at the molecular level.'
+          },
+          {
+            step: 7,
+            title: 'Electrostatic Epoxy Coating',
+            short: '7. Epoxy Coating',
+            spec: '200°C Oven-Cured Signature Blue Armor',
+            metric: 'Chip, Oil & Stone-Impact Resistant',
+            img: `/assets/strut-7.png?v=${IMG_VER}`,
+            desc: 'Sprayed in our electrostatic booth with TYPE ONE signature Royal Blue epoxy powder and thermally cured for a durable, showroom-grade metallic finish.'
+          },
+          {
+            step: 8,
+            title: 'Final QC & Finished Product',
+            short: '8. Product',
+            spec: 'Master Jig Verification & Serial Coding',
+            metric: 'Backed by Official Lifetime Warranty',
+            img: `/assets/strut-8.png?v=${IMG_VER}`,
+            desc: 'Every finished bar passes a final master-jig fitment check, receives its warranty serial code, and is packed for domestic distribution or global export.'
+          }
+        ]
+      },
+      arb: {
+        name: 'Anti-Roll Bar Production Process',
+        subtitle: 'Complete in-house manufacturing from 16mm–28mm solid spring steel rods to induction-forged sway bars',
+        accent: '#ED1C24',
+        badge: 'PRODUCTION LINE 02 • SOLID ANTI-ROLL BARS',
+        stages: [
+          {
+            step: 1,
+            title: 'Solid Spring Steel Screening',
+            short: '1. Raw Material',
+            spec: '16mm – 28mm Cold-Formed Solid Rods',
+            metric: 'High-Carbon Spring Alloy Verification',
+            img: `/assets/arb-1.png?v=${IMG_VER}`,
+            desc: 'Solid spring steel rods ranging from 16mm to 28mm are screened for metallurgical composition and surface integrity prior to forming.'
+          },
+          {
+            step: 2,
+            title: 'CNC 3D Torsion Bar Bending',
+            short: '2. Bending',
+            spec: 'Multi-Plane Suspension Geometry',
+            metric: 'OEM Exhaust & Subframe Clearance',
+            img: `/assets/arb-2.png?v=${IMG_VER}`,
+            desc: 'Heavy-duty CNC benders shape the solid steel rod into complex 3D sway-bar geometry that clears control arms, driveshafts, and exhaust systems throughout full suspension travel.'
+          },
+          {
+            step: 3,
+            title: 'Induction Thermal Forging',
+            short: '3. Forging',
+            spec: '950°C High-Frequency Induction Coils',
+            metric: 'Refined Grain Structure at Bar Ends',
+            img: `/assets/arb-3.png?v=${IMG_VER}`,
+            desc: 'The ends of the solid steel bar are rapidly heated inside electric induction coils to forging temperature without weakening the central torsion section.'
+          },
+          {
+            step: 4,
+            title: 'End-Link Blade Stamping',
+            short: '4. Stamping',
+            spec: 'High-Pressure Die Flattening',
+            metric: 'Forged One-Piece Mounting Ears',
+            img: `/assets/arb-4.png?v=${IMG_VER}`,
+            desc: 'While glowing red-hot, the bar ends are stamped into precision flat mounting blades—eliminating weak welded end-tabs used by inferior sway bars.'
+          },
+          {
+            step: 5,
+            title: 'CNC End-Link Drilling',
+            short: '5. Drilling',
+            spec: 'Precision Bored Drop-Link Holes',
+            metric: 'Zero-Play Suspension Link Fitment',
+            img: `/assets/arb-5.png?v=${IMG_VER}`,
+            desc: 'Forged bar ends are CNC-drilled to exact factory stabilizer link diameters for instant, play-free torsional response.'
+          },
+          {
+            step: 6,
+            title: 'Heat Treatment & Phosphating',
+            short: '6. Treatment',
+            spec: 'Stress-Relief & Anti-Corrosion Bath',
+            metric: 'Zero Sag Over 100,000+ Cycles',
+            img: `/assets/arb-6.png?v=${IMG_VER}`,
+            desc: 'Bars undergo thermal stress-relieving and multi-stage chemical surface treatment to prevent fatigue and rust under harsh underbody conditions.'
+          },
+          {
+            step: 7,
+            title: 'Electrostatic Epoxy Coating',
+            short: '7. Epoxy Coating',
+            spec: 'Heavy-Build Underbody Epoxy Finish',
+            metric: 'Gravel & Moisture Armor',
+            img: `/assets/arb-7.png?v=${IMG_VER}`,
+            desc: 'Coated in high-build electrostatic epoxy powder and baked to withstand underbody gravel spray, water, and torsional flex without cracking.'
+          },
+          {
+            step: 8,
+            title: 'Torsional QC & Finished Product',
+            short: '8. Product',
+            spec: 'Spring-Rate & Bushing Kit Pairing',
+            metric: 'Complete with Polyurethane Mounts',
+            img: `/assets/arb-8.png?v=${IMG_VER}`,
+            desc: 'Verified for exact spring rate and paired with heavy-duty bushings and 4.5mm mounting brackets, ready for bolt-on installation.'
+          }
+        ]
+      }
+    };
+
+    let state = {
+      cms: null,
+      selectedBrand: 'All',
+      selectedPhase: 'All',
+      selectedPartType: 'All',
+      searchQuery: '',
+      activePhaseTab: 0,
+      modalProduct: null,
+      activeFormTab: 'inquiry',
+      inquiryType: 'Dealer Application',
+      toastMessage: null,
+      exportViewMode: '3d-globe',
+      selectedExportId: 'exp-my',
+      autoRotateGlobe: true,
+      activeMaterialIndex: 0,
+      activeProcessLine: 'strut',
+      activeProcessStep: 0,
+      processAutoPlay: false,
+      // Realistic Hero Showcase State
+      heroMode: 'underbody', // 'underbody' | 'factory'
+      activeInstallIndex: 0,
+      activeHeroFactoryStep: 1
+    };
+
+    let globeInstance = null;
+    let processAutoTimer = null;
+
+    async function loadCMS() {
+      const res = await fetch('/api/cms', { cache: 'no-store' });
+      state.cms = await res.json();
+      if (state.cms.globalExports?.length) {
+        state.selectedExportId = state.cms.globalExports[0].id;
+      }
+      render();
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getFilteredProducts() {
+      if (!state.cms) return [];
+      return state.cms.products.filter((item) => {
+        const matchBrand = state.selectedBrand === 'All' || item.brand.toLowerCase() === state.selectedBrand.toLowerCase();
+        const matchPhase = state.selectedPhase === 'All' || item.phase === state.selectedPhase;
+        const matchPart = state.selectedPartType === 'All' || item.partType.toLowerCase().includes(state.selectedPartType.toLowerCase());
+        const q = state.searchQuery.trim().toLowerCase();
+        const matchQuery = !q ||
+          item.name.toLowerCase().includes(q) ||
+          item.carModel.toLowerCase().includes(q) ||
+          item.sku.toLowerCase().includes(q) ||
+          item.brand.toLowerCase().includes(q) ||
+          item.partType.toLowerCase().includes(q);
+        return matchBrand && matchPhase && matchPart && matchQuery;
+      });
+    }
+
+    // Hero Realistic Interactive Handlers
+    window.setHeroMode = (mode) => {
+      state.heroMode = mode;
+      const root = document.getElementById('hero-realistic-stage');
+      if (root) root.innerHTML = buildHeroRealisticStageHtml();
+    };
+
+    window.selectHeroInstall = (idx) => {
+      state.activeInstallIndex = idx;
+      const root = document.getElementById('hero-realistic-stage');
+      if (root) root.innerHTML = buildHeroRealisticStageHtml();
+    };
+
+    window.selectHeroFactoryPhoto = (idx) => {
+      state.activeHeroFactoryStep = idx;
+      const root = document.getElementById('hero-realistic-stage');
+      if (root) root.innerHTML = buildHeroRealisticStageHtml();
+    };
+
+    function buildHeroRealisticStageHtml() {
+      const inst = REAL_CHASSIS_INSTALLATIONS[state.activeInstallIndex] || REAL_CHASSIS_INSTALLATIONS[0];
+      const factoryHighlights = [
+        {
+          title: 'CNC Fiber Laser Cutting (4.5mm Plates)',
+          tag: 'IN-HOUSE R&D & LASER',
+          spec: '±0.05mm Optical Precision',
+          img: `/assets/strut-2.png?v=${IMG_VER}`,
+          desc: 'All 4.3mm–4.5mm steel mounting brackets are cut in-house on high-wattage fiber lasers for 100% factory bolt-hole accuracy.'
+        },
+        {
+          title: '950°C Thermal Induction Forging',
+          tag: 'SOLID SPRING STEEL',
+          spec: '16mm – 28mm Solid Anti-Roll Bars',
+          img: `/assets/arb-3.png?v=${IMG_VER}`,
+          desc: 'Solid spring steel sway bar ends are induction-heated and die-stamped into one-piece mounting blades with zero welded end-tabs.'
+        },
+        {
+          title: '360° Master-Jig TIG Welding',
+          tag: 'STRUCTURAL FUSION',
+          spec: '1.4mm – 1.6mm High-Tensile Oval Steel',
+          img: `/assets/strut-5.png?v=${IMG_VER}`,
+          desc: 'Each multi-point bar is welded inside model-specific steel master jigs to guarantee plug-and-play chassis fitment.'
+        },
+        {
+          title: 'Electrostatic Epoxy Powder Coating',
+          tag: 'FINISHING & QC',
+          spec: '200°C Cured Royal Blue Finish',
+          img: `/assets/arb-8.png?v=${IMG_VER}`,
+          desc: 'Finished with chemical phosphating and oven-cured electrostatic epoxy powder coating, backed by our Lifetime Structural Warranty.'
+        }
+      ];
+      const activeFac = factoryHighlights[state.activeHeroFactoryStep] || factoryHighlights[0];
+
+      return `
+        <div class="rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
+          <!-- Stage Header Switcher -->
+          <div class="p-4 sm:p-5 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span class="text-[11px] font-mono uppercase tracking-wider text-blue-400 block">REALISTIC ENGINEERING SHOWCASE</span>
+              <h2 class="text-base font-bold text-white font-heading">
+                ${state.heroMode === 'underbody' ? 'Actual Vehicle Underbody Multi-Point Fitment' : 'Kuala Lumpur Factory Production Floor'}
+              </h2>
+            </div>
+
+            <div class="inline-flex rounded-lg bg-slate-900 p-1 border border-slate-800">
+              <button
+                type="button"
+                onclick="setHeroMode('underbody')"
+                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                  state.heroMode === 'underbody' ? 'bg-[#0018FF] text-white' : 'text-slate-400 hover:text-white'
+                }"
+              >
+                Installed Chassis View
+              </button>
+              <button
+                type="button"
+                onclick="setHeroMode('factory')"
+                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                  state.heroMode === 'factory' ? 'bg-[#ED1C24] text-white' : 'text-slate-400 hover:text-white'
+                }"
+              >
+                In-House Factory Floor
+              </button>
+            </div>
+          </div>
+
+          ${state.heroMode === 'underbody' ? `
+            <!-- MODE 1: Real Underbody Hoist Photo + Real Installed Component Photography -->
+            <div class="p-5 sm:p-6 space-y-5">
+              <div class="grid sm:grid-cols-12 gap-4 items-stretch">
+                <!-- Left: Full Underbody Hoist Photo with Interactive Numbered Hotspots -->
+                <div class="sm:col-span-5 relative rounded-xl bg-black border border-slate-800 overflow-hidden flex items-center justify-center min-h-[260px]">
+                  <img
+                    src="https://typeone.com.my/wp-content/uploads/2024/04/full-set-car.webp"
+                    alt="TYPE ONE Complete Underbody Installation on Hoist"
+                    class="w-full h-64 object-contain"
+                  />
+                  ${REAL_CHASSIS_INSTALLATIONS.map((item, idx) => {
+                    const isAct = state.activeInstallIndex === idx;
+                    return `
+                      <button
+                        type="button"
+                        onclick="selectHeroInstall(${idx})"
+                        style="top: ${item.pinTop}; left: ${item.pinLeft};"
+                        class="absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full font-mono text-[10px] font-bold flex items-center justify-center transition-transform cursor-pointer shadow-lg border ${
+                          isAct
+                            ? 'bg-[#ED1C24] text-white border-white scale-125 z-20'
+                            : 'bg-[#0018FF]/90 text-white border-white/70 hover:scale-110 z-10'
+                        }"
+                        title="${escapeHtml(item.name)}"
+                      >
+                        ${item.code}
+                      </button>
+                    `;
+                  }).join('')}
+                  <div class="absolute bottom-2 left-2 right-2 text-center bg-slate-950/85 backdrop-blur-xs py-1 px-2 rounded text-[10px] font-mono text-slate-300">
+                    Click any pin (01–06) on the hoist photo
+                  </div>
+                </div>
+
+                <!-- Right: Real Installed Component Close-Up Photo & Engineering Spec -->
+                <div class="sm:col-span-7 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden flex flex-col justify-between">
+                  <div class="relative h-48 bg-black flex items-center justify-center border-b border-slate-800 p-2">
+                    <img
+                      src="${inst.photo}"
+                      alt="${escapeHtml(inst.name)}"
+                      class="w-full h-full object-contain"
+                    />
+                    <span class="absolute top-3 left-3 px-2.5 py-1 rounded bg-[#0018FF] text-white font-mono text-[11px] font-bold">
+                      POSITION ${inst.code} / 06
+                    </span>
+                    <span class="absolute top-3 right-3 px-2.5 py-1 rounded bg-slate-900/90 border border-slate-700 text-slate-200 font-mono text-[10px]">
+                      ${escapeHtml(inst.position)}
+                    </span>
+                  </div>
+                  <div class="p-4 space-y-1.5">
+                    <div class="text-xs font-mono text-blue-400">${escapeHtml(inst.spec)}</div>
+                    <h3 class="text-base font-bold text-white font-heading">${escapeHtml(inst.name)}</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">${escapeHtml(inst.desc)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 6 Real Component Position Selector Buttons -->
+              <div class="grid grid-cols-2 sm:grid-cols-6 gap-2">
+                ${REAL_CHASSIS_INSTALLATIONS.map((item, idx) => {
+                  const active = state.activeInstallIndex === idx;
+                  return `
+                    <button
+                      type="button"
+                      onclick="selectHeroInstall(${idx})"
+                      class="p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        active
+                          ? 'bg-[#0018FF] border-[#0018FF] text-white'
+                          : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-slate-600'
+                      }"
+                    >
+                      <div class="text-[10px] font-mono ${active ? 'text-blue-200' : 'text-slate-500'}">${item.code}</div>
+                      <div class="text-[11px] font-semibold truncate mt-0.5">${escapeHtml(item.name.replace('Complete Multi-Point ', '').replace('Upper ', '').replace('Subframe ', ''))}</div>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : `
+            <!-- MODE 2: Real 4K Factory Floor Manufacturing Photography -->
+            <div class="p-5 sm:p-6 space-y-4">
+              <div class="relative h-72 sm:h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                <img
+                  src="${activeFac.img}"
+                  alt="${escapeHtml(activeFac.title)}"
+                  class="w-full h-full object-cover"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+                <div class="absolute top-3 left-3 flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded bg-[#ED1C24] text-white font-mono text-[11px] font-bold">
+                    ${escapeHtml(activeFac.tag)}
+                  </span>
+                  <span class="px-2.5 py-1 rounded bg-slate-950/85 text-slate-200 border border-white/15 font-mono text-[11px]">
+                    ${escapeHtml(activeFac.spec)}
+                  </span>
+                </div>
+                <div class="absolute bottom-4 left-4 right-4">
+                  <h3 class="text-xl font-bold text-white font-heading">${escapeHtml(activeFac.title)}</h3>
+                  <p class="text-xs text-slate-300 mt-1 max-w-xl">${escapeHtml(activeFac.desc)}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                ${factoryHighlights.map((fh, idx) => {
+                  const active = state.activeHeroFactoryStep === idx;
+                  return `
+                    <button
+                      type="button"
+                      onclick="selectHeroFactoryPhoto(${idx})"
+                      class="group rounded-xl overflow-hidden border text-left transition-all cursor-pointer ${
+                        active ? 'border-[#ED1C24] ring-1 ring-[#ED1C24]' : 'border-slate-800 opacity-75 hover:opacity-100'
+                      }"
+                    >
+                      <div class="h-16 bg-slate-950 overflow-hidden">
+                        <img src="${fh.img}" alt="${escapeHtml(fh.title)}" class="w-full h-full object-cover" />
+                      </div>
+                      <div class="p-2 bg-slate-950">
+                        <div class="text-[10px] font-mono text-slate-400 truncate">${escapeHtml(fh.tag)}</div>
+                        <div class="text-[11px] font-bold text-white truncate">${escapeHtml(fh.title)}</div>
+                      </div>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    window.setBrandFilter = (b, scroll = false) => {
+      state.selectedBrand = b;
+      render();
+      if (scroll) document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.setPhaseFilter = (p) => {
+      state.selectedPhase = p;
+      render();
+    };
+
+    window.setPartFilter = (pt, scroll = false) => {
+      state.selectedPartType = pt;
+      render();
+      if (scroll) document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.setSearchQuery = (val) => {
+      state.searchQuery = val;
+      const container = document.getElementById('catalog-grid');
+      const countEl = document.getElementById('catalog-count');
+      const filtered = getFilteredProducts();
+      if (container) container.innerHTML = buildProductGridHtml(filtered);
+      if (countEl) countEl.textContent = `${filtered.length} engineered components`;
+    };
+
+    window.resetFilters = () => {
+      state.selectedBrand = 'All';
+      state.selectedPhase = 'All';
+      state.selectedPartType = 'All';
+      state.searchQuery = '';
+      render();
+    };
+
+    window.setPhaseTab = (idx) => {
+      state.activePhaseTab = idx;
+      render();
+    };
+
+    window.selectMaterialSpec = (idx) => {
+      state.activeMaterialIndex = idx;
+      const container = document.getElementById('engineering-interactive-root');
+      if (container) container.innerHTML = buildEngineeringInteractiveHtml();
+    };
+
+    window.switchProcessLine = (lineKey) => {
+      state.activeProcessLine = lineKey;
+      state.activeProcessStep = 0;
+      const container = document.getElementById('engineering-interactive-root');
+      if (container) container.innerHTML = buildEngineeringInteractiveHtml();
+    };
+
+    window.selectProcessStep = (stepIdx, stopAuto = true) => {
+      if (stopAuto && state.processAutoPlay) {
+        state.processAutoPlay = false;
+        clearInterval(processAutoTimer);
+      }
+      state.activeProcessStep = (stepIdx + 8) % 8;
+      const container = document.getElementById('engineering-interactive-root');
+      if (container) container.innerHTML = buildEngineeringInteractiveHtml();
+    };
+
+    window.toggleProcessAutoPlay = () => {
+      state.processAutoPlay = !state.processAutoPlay;
+      clearInterval(processAutoTimer);
+      if (state.processAutoPlay) {
+        processAutoTimer = setInterval(() => {
+          window.selectProcessStep(state.activeProcessStep + 1, false);
+        }, 2600);
+      }
+      const container = document.getElementById('engineering-interactive-root');
+      if (container) container.innerHTML = buildEngineeringInteractiveHtml();
+    };
+
+    function buildEngineeringInteractiveHtml() {
+      const mat = MATERIAL_SPECS_DATA[state.activeMaterialIndex] || MATERIAL_SPECS_DATA[0];
+      const line = PRODUCTION_LINES[state.activeProcessLine] || PRODUCTION_LINES.strut;
+      const activeStage = line.stages[state.activeProcessStep] || line.stages[0];
+      const progressPct = Math.round(((state.activeProcessStep + 1) / 8) * 100);
+      const isStrut = state.activeProcessLine === 'strut';
+
+      return `
+        <div class="space-y-10">
+          <!-- PART 1: Realistic Photographic Material Specifications Showcase -->
+          <div class="rounded-2xl bg-slate-50 border border-slate-200 p-6 sm:p-8 space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-wider text-slate-500">SCREENED RAW MATERIALS</span>
+                <h3 class="text-xl font-bold text-slate-950 font-heading mt-0.5">Metallurgy & Structural Specifications</h3>
+              </div>
+              <span class="text-xs text-slate-500">Select a material standard to inspect macro photography</span>
+            </div>
+
+            <div class="grid sm:grid-cols-3 gap-4">
+              ${MATERIAL_SPECS_DATA.map((item, idx) => {
+                const active = state.activeMaterialIndex === idx;
+                return `
+                  <button
+                    type="button"
+                    onclick="selectMaterialSpec(${idx})"
+                    class="text-left p-5 rounded-xl border transition-all cursor-pointer ${
+                      active
+                        ? 'bg-slate-950 text-white border-slate-950 shadow-lg'
+                        : 'bg-white text-slate-900 border-slate-200 hover:border-slate-400'
+                    }"
+                  >
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                      <span class="text-xs font-medium ${active ? 'text-slate-400' : 'text-slate-500'}">${escapeHtml(item.category)}</span>
+                      <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold ${
+                        active ? 'bg-[#0018FF] text-white' : 'bg-slate-100 text-slate-800'
+                      }">${escapeHtml(item.badge)}</span>
+                    </div>
+                    <div class="text-sm font-bold leading-snug">${escapeHtml(item.title)}</div>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- Real Photographic Material Inspection Panel -->
+            <div class="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 grid md:grid-cols-12 gap-6 items-center">
+              <div class="md:col-span-6 grid grid-cols-2 gap-3">
+                <div class="h-44 rounded-lg overflow-hidden bg-slate-950 border border-slate-200">
+                  <img src="${mat.photo}" alt="${escapeHtml(mat.title)}" class="w-full h-full object-cover" />
+                </div>
+                <div class="h-44 rounded-lg overflow-hidden bg-slate-950 border border-slate-200">
+                  <img src="${mat.secondaryPhoto}" alt="${escapeHtml(mat.category)}" class="w-full h-full object-cover" />
+                </div>
+              </div>
+              <div class="md:col-span-6 space-y-3">
+                <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
+                  <span class="px-2.5 py-1 rounded bg-slate-100 text-slate-900 font-semibold">${escapeHtml(mat.tolerance)}</span>
+                  <span class="px-2.5 py-1 rounded bg-blue-50 text-[#0018FF] font-semibold">${escapeHtml(mat.tensile)}</span>
+                </div>
+                <h4 class="text-xl font-bold text-slate-950 font-heading">${escapeHtml(mat.title)}</h4>
+                <p class="text-sm text-slate-600 leading-relaxed">${escapeHtml(mat.summary)}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- PART 2: Redesigned 4K Interactive Production Process Flow -->
+          <div class="rounded-2xl bg-[#070C17] text-white border border-slate-800 p-6 sm:p-10 space-y-8 shadow-2xl">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-800 pb-6">
+              <div>
+                <div class="text-xs font-mono uppercase tracking-widest ${isStrut ? 'text-blue-400' : 'text-red-400'} mb-1">
+                  ${escapeHtml(line.badge)}
+                </div>
+                <h3 class="text-2xl sm:text-3xl font-bold text-white font-heading">${escapeHtml(line.name)}</h3>
+                <p class="text-sm text-slate-400 mt-1">${escapeHtml(line.subtitle)}</p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="inline-flex rounded-xl bg-slate-900 p-1.5 border border-slate-800">
+                  <button
+                    type="button"
+                    onclick="switchProcessLine('strut')"
+                    class="px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      isStrut ? 'bg-[#0018FF] text-white shadow' : 'text-slate-400 hover:text-white'
+                    }"
+                  >
+                    Strut Bar Process (8 Steps)
+                  </button>
+                  <button
+                    type="button"
+                    onclick="switchProcessLine('arb')"
+                    class="px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      !isStrut ? 'bg-[#ED1C24] text-white shadow' : 'text-slate-400 hover:text-white'
+                    }"
+                  >
+                    Anti-Roll Bar Process (8 Steps)
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onclick="toggleProcessAutoPlay()"
+                  class="px-4 py-2.5 rounded-xl border text-xs font-mono font-semibold transition-colors cursor-pointer ${
+                    state.processAutoPlay
+                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                      : 'bg-slate-900 border-slate-700 text-slate-200 hover:border-slate-500'
+                  }"
+                >
+                  ${state.processAutoPlay ? 'Pause Auto-Tour' : 'Auto-Play 8 Stages'}
+                </button>
+              </div>
+            </div>
+
+            <!-- 4K Active Stage Spotlight Cinema Viewer -->
+            <div class="rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden grid lg:grid-cols-12">
+              <div class="lg:col-span-7 relative h-72 sm:h-96 bg-slate-950 overflow-hidden">
+                <img
+                  src="${activeStage.img}"
+                  alt="${escapeHtml(activeStage.title)}"
+                  class="w-full h-full object-cover object-center transition-all duration-500"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/30"></div>
+                <div class="absolute top-4 left-4 flex items-center gap-2">
+                  <span class="px-3 py-1 rounded-lg text-xs font-mono font-bold ${
+                    isStrut ? 'bg-[#0018FF] text-white' : 'bg-[#ED1C24] text-white'
+                  } shadow-lg">
+                    STATION 0${activeStage.step} / 08
+                  </span>
+                  <span class="px-3 py-1 rounded-lg bg-slate-950/85 backdrop-blur-md border border-white/15 text-xs font-mono text-slate-200">
+                    4K IN-HOUSE PROCESS
+                  </span>
+                </div>
+                <div class="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-4">
+                  <div>
+                    <div class="text-xs font-mono text-slate-300">${escapeHtml(activeStage.spec)}</div>
+                    <div class="text-xl sm:text-2xl font-bold text-white font-heading">${escapeHtml(activeStage.short)} — ${escapeHtml(activeStage.title)}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+                    <span>PRODUCTION STAGE</span>
+                    <span>${progressPct}% COMPLETE</span>
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      class="h-full transition-all duration-300 ${isStrut ? 'bg-[#0018FF]' : 'bg-[#ED1C24]'}"
+                      style="width: ${progressPct}%"
+                    ></div>
+                  </div>
+
+                  <div class="pt-2">
+                    <span class="inline-block px-2.5 py-1 rounded text-xs font-mono ${
+                      isStrut ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30' : 'bg-red-500/15 text-red-300 border border-red-500/30'
+                    }">
+                      ${escapeHtml(activeStage.metric)}
+                    </span>
+                  </div>
+
+                  <h4 class="text-2xl font-bold text-white font-heading">
+                    0${activeStage.step}. ${escapeHtml(activeStage.title)}
+                  </h4>
+
+                  <p class="text-sm text-slate-300 leading-relaxed">
+                    ${escapeHtml(activeStage.desc)}
+                  </p>
+                </div>
+
+                <div class="pt-5 border-t border-slate-800 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onclick="selectProcessStep(${state.activeProcessStep - 1})"
+                    class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition-colors cursor-pointer"
+                  >
+                    ← Prev
+                  </button>
+                  <div class="flex items-center gap-1.5">
+                    ${line.stages.map((_, i) => `
+                      <button
+                        type="button"
+                        onclick="selectProcessStep(${i})"
+                        class="h-2 rounded-full transition-all cursor-pointer ${
+                          i === state.activeProcessStep
+                            ? isStrut
+                              ? 'w-7 bg-[#0018FF]'
+                              : 'w-7 bg-[#ED1C24]'
+                            : 'w-2 bg-slate-700 hover:bg-slate-500'
+                        }"
+                      ></button>
+                    `).join('')}
+                  </div>
+                  <button
+                    type="button"
+                    onclick="selectProcessStep(${state.activeProcessStep + 1})"
+                    class="px-4 py-2 rounded-lg ${
+                      isStrut ? 'bg-[#0018FF] hover:bg-blue-600' : 'bg-[#ED1C24] hover:bg-red-600'
+                    } text-xs font-semibold text-white transition-colors cursor-pointer"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 8-Stage Visual Process Flow Architecture -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+                <span>COMPLETE 8-STAGE IN-HOUSE PRODUCTION PIPELINE</span>
+                <span>01 RAW MATERIAL → 08 FINISHED PRODUCT</span>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                ${line.stages.map((st, idx) => {
+                  const isCurrent = idx === state.activeProcessStep;
+                  const isCompleted = idx <= state.activeProcessStep;
+                  return `
+                    <button
+                      type="button"
+                      onclick="selectProcessStep(${idx})"
+                      class="group text-left rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer flex flex-col ${
+                        isCurrent
+                          ? isStrut
+                            ? 'bg-slate-900 border-[#0018FF] ring-2 ring-[#0018FF]/50 -translate-y-1 shadow-xl'
+                            : 'bg-slate-900 border-[#ED1C24] ring-2 ring-[#ED1C24]/50 -translate-y-1 shadow-xl'
+                          : isCompleted
+                          ? 'bg-slate-900/80 border-slate-700 hover:border-slate-500'
+                          : 'bg-slate-900/40 border-slate-800/80 opacity-75 hover:opacity-100 hover:border-slate-600'
+                      }"
+                    >
+                      <div class="relative h-32 sm:h-36 w-full bg-slate-950 overflow-hidden">
+                        <img
+                          src="${st.img}"
+                          alt="${escapeHtml(st.title)}"
+                          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent"></div>
+                        <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
+                          isCurrent
+                            ? isStrut
+                              ? 'bg-[#0018FF] text-white'
+                              : 'bg-[#ED1C24] text-white'
+                            : 'bg-slate-950/85 text-slate-200 border border-white/15'
+                        }">
+                          0${st.step}
+                        </span>
+                        <span class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded bg-slate-950/80 text-[10px] font-mono text-slate-300">
+                          ${idx < 7 ? `Step ${st.step} →` : 'QC Verified'}
+                        </span>
+                      </div>
+                      <div class="p-3.5 space-y-1">
+                        <div class="text-xs sm:text-sm font-bold text-white font-heading truncate">${escapeHtml(st.short)}</div>
+                        <div class="text-[11px] text-slate-400 truncate">${escapeHtml(st.spec)}</div>
+                      </div>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    window.openModal = (id) => {
+      state.modalProduct = state.cms.products.find(p => p.id === id) || null;
+      render();
+    };
+
+    window.closeModal = () => {
+      state.modalProduct = null;
+      render();
+    };
+
+    window.inquireProduct = (id) => {
+      const p = state.cms.products.find(x => x.id === id);
+      state.modalProduct = null;
+      state.activeFormTab = 'inquiry';
+      state.inquiryType = 'Dealer Application';
+      render();
+      const vehInput = document.getElementById('inq-vehicle');
+      const msgInput = document.getElementById('inq-message');
+      if (p && vehInput && msgInput) {
+        vehInput.value = `${p.carModel} (Application Code: ${p.sku})`;
+        msgInput.value = `Technical / trade inquiry regarding ${p.name} [Code: ${p.sku}].`;
+      }
+      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.inquireExportDistributor = (countryName) => {
+      state.activeFormTab = 'inquiry';
+      state.inquiryType = 'Dealer Application';
+      render();
+      const vehInput = document.getElementById('inq-vehicle');
+      const msgInput = document.getElementById('inq-message');
+      if (vehInput && msgInput) {
+        vehInput.value = `${countryName} — Regional Distributor Partnership`;
+        msgInput.value = `We are interested in partnering with TYPE ONE as an authorized distributor in ${countryName}.`;
+      }
+      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.switchPortalTab = (tab, type = null) => {
+      state.activeFormTab = tab;
+      if (type) state.inquiryType = type;
+      state.toastMessage = null;
+      render();
+    };
+
+    window.setExportViewMode = (mode) => {
+      state.exportViewMode = mode;
+      globeInstance = null;
+      render();
+    };
+
+    window.selectExportCountry = (id) => {
+      state.selectedExportId = id;
+      const list = state.cms.globalExports || [];
+      const target = list.find(c => c.id === id);
+      updateExportSelectionDOM();
+      if (target && globeInstance && state.exportViewMode === '3d-globe') {
+        globeInstance.pointOfView({ lat: target.lat, lng: target.lng, altitude: 1.5 }, 1000);
+      }
+    };
+
+    window.toggleGlobeRotation = () => {
+      state.autoRotateGlobe = !state.autoRotateGlobe;
+      if (globeInstance && globeInstance.controls()) {
+        globeInstance.controls().autoRotate = state.autoRotateGlobe;
+      }
+      const btn = document.getElementById('globe-rotate-btn');
+      if (btn) btn.textContent = state.autoRotateGlobe ? 'Pause Rotation' : 'Auto Rotate';
+    };
+
+    window.zoomGlobe = (delta) => {
+      if (!globeInstance) return;
+      const pov = globeInstance.pointOfView();
+      const nextAlt = Math.max(0.85, Math.min(3.0, (pov.altitude || 1.8) + delta));
+      globeInstance.pointOfView({ altitude: nextAlt }, 350);
+    };
+
+    window.handle3DMapTilt = (e) => {
+      const card = document.getElementById('map-3d-stage');
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `rotateX(${(-y * 12 + 6).toFixed(2)}deg) rotateY(${(x * 14).toFixed(2)}deg)`;
+    };
+
+    window.reset3DMapTilt = () => {
+      const card = document.getElementById('map-3d-stage');
+      if (card) card.style.transform = 'rotateX(6deg) rotateY(0deg)';
+    };
+
+    function latLngToPercent(lat, lng) {
+      const x = ((lng + 75) / 225) * 100;
+      const y = ((68 - lat) / 118) * 100;
+      return {
+        x: Math.max(5, Math.min(95, x)),
+        y: Math.max(10, Math.min(90, y))
+      };
+    }
+
+    function buildExportDetailHtml(selected) {
+      return `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+          <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <div class="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-white font-semibold">${escapeHtml(selected.iso)}</span>
+                <span>${escapeHtml(selected.region)}</span>
+              </div>
+              <h3 class="text-2xl font-bold text-white font-heading mt-1">${escapeHtml(selected.country)}</h3>
+            </div>
+            <span class="text-xs font-mono px-2.5 py-1 rounded ${selected.isHQ ? 'bg-[#ED1C24] text-white' : 'bg-[#0018FF] text-white'}">
+              ${selected.isHQ ? 'HQ & Factory' : 'Export Market'}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="text-xs text-slate-400">Hub / Port</div>
+              <div class="font-medium text-white mt-0.5">${escapeHtml(selected.hubCity)}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400">Coordinates</div>
+              <div class="font-mono text-slate-300 text-xs mt-1">${Number(selected.lat).toFixed(2)}° N, ${Number(selected.lng).toFixed(2)}° E</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs text-slate-400 mb-1">Manufactured Vehicle Series Exported</div>
+            <div class="text-sm text-slate-200 leading-relaxed">${escapeHtml(selected.focusModels)}</div>
+          </div>
+
+          <button type="button" onclick="inquireExportDistributor('${escapeHtml(selected.country)}')" class="w-full py-2.5 px-4 rounded-lg bg-white hover:bg-slate-100 text-slate-950 font-semibold text-xs transition-colors cursor-pointer">
+            Distributor Partnership Inquiry (${escapeHtml(selected.country)})
+          </button>
+        </div>
+      `;
+    }
+
+    function updateExportSelectionDOM() {
+      const list = state.cms?.globalExports || [];
+      const selected = list.find(c => c.id === state.selectedExportId) || list[0];
+      if (!selected) return;
+
+      document.querySelectorAll('[data-country-btn]').forEach(btn => {
+        const active = btn.getAttribute('data-country-btn') === selected.id;
+        btn.className = `px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between border transition-colors cursor-pointer ${
+          active
+            ? 'bg-[#0018FF] text-white border-[#0018FF]'
+            : 'bg-slate-900/70 text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white'
+        }`;
+      });
+
+      const panel = document.getElementById('export-detail-card');
+      if (panel) panel.innerHTML = buildExportDetailHtml(selected);
+    }
+
+    function init3DGlobe() {
+      if (state.exportViewMode !== '3d-globe') return;
+      const container = document.getElementById('typeone-3d-globe');
+      if (!container || typeof Globe === 'undefined') return;
+
+      const list = state.cms?.globalExports || [];
+      const hq = list.find(c => c.isHQ) || { lat: 3.139, lng: 101.6869, country: 'Malaysia' };
+
+      const arcsData = list
+        .filter(c => !c.isHQ)
+        .map((dest) => ({
+          startLat: hq.lat,
+          startLng: hq.lng,
+          endLat: dest.lat,
+          endLng: dest.lng,
+          color: ['#0018FF', '#ED1C24']
+        }));
+
+      const ringsData = list.map(c => ({
+        lat: c.lat,
+        lng: c.lng,
+        maxR: c.isHQ ? 6 : 3.5,
+        propagationSpeed: 2,
+        repeatPeriod: 900,
+        color: c.isHQ ? '#ED1C24' : '#3B82F6'
+      }));
+
+      const width = container.clientWidth || 680;
+      const height = 500;
+
+      globeInstance = Globe()(container)
+        .width(width)
+        .height(height)
+        .backgroundColor('rgba(0,0,0,0)')
+        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+        .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+        .showAtmosphere(true)
+        .atmosphereColor('#1D4ED8')
+        .atmosphereAltitude(0.16)
+        .arcsData(arcsData)
+        .arcColor('color')
+        .arcDashLength(0.5)
+        .arcDashGap(0.25)
+        .arcDashAnimateTime(2000)
+        .arcStroke(0.75)
+        .arcAltitudeAutoScale(0.35)
+        .ringsData(ringsData)
+        .ringColor(d => d.color)
+        .ringMaxRadius('maxR')
+        .ringPropagationSpeed('propagationSpeed')
+        .ringRepeatPeriod('repeatPeriod')
+        .htmlElementsData(list)
+        .htmlLat(d => d.lat)
+        .htmlLng(d => d.lng)
+        .htmlAltitude(d => (d.isHQ ? 0.03 : 0.015))
+        .htmlElement(d => {
+          const el = document.createElement('div');
+          el.style.pointerEvents = 'auto';
+          el.style.cursor = 'pointer';
+          el.innerHTML = `
+            <div title="${escapeHtml(d.country)}" class="flex flex-col items-center -translate-x-1/2 -translate-y-full select-none">
+              <div class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold shadow-md border ${
+                d.isHQ
+                  ? 'bg-[#ED1C24] text-white border-white'
+                  : 'bg-slate-950/90 text-white border-slate-600 hover:border-white'
+              }">
+                ${escapeHtml(d.iso)}
+              </div>
+              <div class="w-1.5 h-1.5 rotate-45 -mt-0.5 ${d.isHQ ? 'bg-[#ED1C24]' : 'bg-white'}"></div>
+            </div>
+          `;
+          el.onclick = () => window.selectExportCountry(d.id);
+          return el;
+        });
+
+      globeInstance.pointOfView({ lat: 14.0, lng: 95.0, altitude: 1.85 }, 0);
+      const controls = globeInstance.controls();
+      if (controls) {
+        controls.autoRotate = state.autoRotateGlobe;
+        controls.autoRotateSpeed = 0.55;
+        controls.enableZoom = true;
+      }
+    }
+
+    // Manufacturer Engineering Showcase Grid (No retail prices or "Buy" buttons)
+    function buildProductGridHtml(filtered) {
+      if (filtered.length === 0) {
+        return `
+          <div class="text-center py-16 rounded-xl bg-slate-50 border border-slate-200 p-8">
+            <h3 class="text-lg font-bold text-slate-900 font-heading">Custom R&D & Model Coverage</h3>
+            <p class="text-sm text-slate-600 max-w-md mx-auto mt-1 mb-5">
+              TYPE ONE manufactures over 1,500+ chassis bar applications across 30+ automotive makes in Kuala Lumpur. Contact our engineering department for full catalog specifications.
+            </p>
+            <a href="#contact" onclick="switchPortalTab('inquiry', 'Vehicle Fitment Inquiry')" class="inline-flex items-center px-5 py-2.5 rounded-lg bg-[#0018FF] hover:bg-blue-700 text-white text-sm font-medium cursor-pointer">
+              Contact R&D Department
+            </a>
+          </div>
+        `;
+      }
+      return `
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          ${filtered.map(product => `
+            <div onclick="openModal('${escapeHtml(product.id)}')" class="group rounded-xl bg-white border border-slate-200 hover:border-slate-900 transition-colors overflow-hidden flex flex-col cursor-pointer">
+              <div class="relative h-52 bg-slate-50/70 p-6 flex items-center justify-center border-b border-slate-100">
+                <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="max-h-40 w-auto object-contain transition-transform duration-200 group-hover:scale-105" loading="lazy" />
+                <span class="absolute top-3 left-3 px-2.5 py-1 rounded bg-white border border-slate-200 text-slate-900 text-[11px] font-mono font-medium">
+                  ${escapeHtml(product.brand)}
+                </span>
+                <span class="absolute top-3 right-3 px-2 py-1 rounded bg-slate-900 text-white text-[10px] font-mono font-medium">
+                  ${escapeHtml(product.mountingPoints)}-POINT
+                </span>
+              </div>
+              <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                <div>
+                  <div class="flex items-center justify-between text-xs font-mono text-slate-500 mb-1.5">
+                    <span>${escapeHtml(product.partType)}</span>
+                    <span>CODE: ${escapeHtml(product.sku)}</span>
+                  </div>
+                  <h3 class="text-base font-bold text-slate-900 font-heading group-hover:text-[#0018FF] transition-colors">${escapeHtml(product.name)}</h3>
+                  <p class="text-xs text-slate-500 mt-1.5 line-clamp-2">${escapeHtml(product.materialSpec)}</p>
+                </div>
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span class="font-mono text-slate-500">
+                    ${escapeHtml(product.phase)}
+                  </span>
+                  <span class="font-semibold text-slate-900 group-hover:text-[#0018FF]">Technical Spec →</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    window.submitInquiryForm = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        action: 'submit_inquiry',
+        type: state.inquiryType,
+        name: form.name.value,
+        phone: form.phone.value,
+        email: form.email.value,
+        vehicleOrLocation: form.vehicleOrLocation.value,
+        message: form.message.value
+      };
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        state.toastMessage = 'Your inquiry has been logged with TYPE ONE HQ. Our team will respond within 24 hours.';
+        form.reset();
+        render();
+      }
+    };
+
+    window.submitWarrantyForm = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        action: 'register_warranty',
+        customerName: form.customerName.value,
+        phone: form.phone.value,
+        email: form.email.value,
+        carModel: form.carModel.value,
+        productSku: form.productSku.value,
+        serialOrInvoice: form.serialOrInvoice.value,
+        installDate: form.installDate.value,
+        dealerName: form.dealerName.value
+      };
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (res.ok) {
+        state.toastMessage = `Warranty registration #${json.warranty.id.toUpperCase()} recorded.`;
+        form.reset();
+        render();
+      }
+    };
+
+    function render() {
+      if (!state.cms) return;
+      const { siteConfig, phases, products, supportedBrands } = state.cms;
+      const globalExports = state.cms.globalExports || [];
+      const vm = siteConfig.visionMission || {
+        intro: 'Malaysian brand specializing in high-performance strut bars, sway bars, and strengthening components.',
+        visionTitle: 'Vision Statement',
+        visionText: 'To be a globally recognized Malaysian performance brand that drives innovation, precision, and strength in every corner of automotive handling.',
+        missionTitle: 'Mission Statement',
+        missionText: 'At TYPEONE, our mission is to engineer and manufacture high-quality performance bars that enhance vehicle stability, safety, and driving experience.',
+        pillars: [
+          'Deliver products built on precision, durability, and innovation.',
+          'Continuously refine our designs through real-world testing and motorsport development.',
+          'Build lasting partnerships with dealers and drivers across the world.',
+          'Represent Malaysia on the global stage as a trusted name in automotive performance engineering.'
+        ]
+      };
+
+      const filtered = getFilteredProducts();
+      const allBrands = ['All', ...Array.from(new Set([...products.map(p => p.brand), ...supportedBrands.map(b => b.name)]))];
+      const allParts = ['All', ...Array.from(new Set(products.map(p => p.partType)))];
+      const activePhase = phases[state.activePhaseTab] || phases[0];
+      const selectedExport = globalExports.find(c => c.id === state.selectedExportId) || globalExports[0];
+      const hqExport = globalExports.find(c => c.isHQ) || { lat: 3.139, lng: 101.6869 };
+      const hqPos = latLngToPercent(hqExport.lat, hqExport.lng);
+
+      document.getElementById('app').innerHTML = `
+        ${siteConfig.seo.showAnnouncement ? `
+          <div class="bg-slate-950 text-slate-300 text-xs py-2 px-4 border-b border-slate-800">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+              <span>${escapeHtml(siteConfig.seo.announcementBanner)}</span>
+              <div class="flex items-center gap-5 font-mono text-[11px]">
+                <span>HQ: Kuala Lumpur, Malaysia</span>
+                <a href="/admin" class="text-white hover:underline">Admin CMS</a>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Clean White Corporate Header -->
+        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-6">
+            <a href="#" class="flex items-center shrink-0">
+              <img src="/assets/typeone-logo.png" alt="TYPE ONE - The Proven Stable Bar" class="h-10 sm:h-11 w-auto object-contain" />
+            </a>
+
+            <nav class="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-700">
+              <a href="#engineering" class="hover:text-[#0018FF] transition-colors">Manufacturing & R&D</a>
+              <a href="#vision-mission" class="hover:text-[#0018FF] transition-colors">Vision & Mission</a>
+              <a href="#global-exports" class="hover:text-[#0018FF] transition-colors">Global Exports</a>
+              <a href="#three-phase" class="hover:text-[#0018FF] transition-colors">3-Phase Architecture</a>
+              <a href="#catalog" class="hover:text-[#0018FF] transition-colors">Vehicle Applications</a>
+              <a href="#contact" onclick="switchPortalTab('warranty')" class="hover:text-[#0018FF] transition-colors">Warranty</a>
+            </nav>
+
+            <div class="flex items-center gap-3">
+              <a href="/admin" class="px-3.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-950 border border-slate-200 hover:border-slate-300 transition-colors">
+                CMS Login
+              </a>
+              <a href="#contact" onclick="switchPortalTab('inquiry', 'Dealer Application')" class="px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-[#0018FF] hover:bg-blue-700 text-white transition-colors">
+                Partner / Dealer Inquiry
+              </a>
+            </div>
+          </div>
+        </header>
+
+        <!-- MANUFACTURER FIRST-FOLD HERO: REALISTIC PHOTOGRAPHY & CORPORATE CAPABILITIES -->
+        <section class="bg-[#070B14] text-white border-b border-slate-800 pt-10 pb-14 lg:pt-14 lg:pb-20">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+              <!-- Left Column (5 Cols): Manufacturer Profile & Capabilities -->
+              <div class="lg:col-span-5 space-y-6">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-white/5 border border-white/10 text-xs font-mono text-blue-400">
+                  <span>MALAYSIAN OEM-GRADE MANUFACTURER • EST. 2017</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl font-bold font-heading tracking-tight text-white leading-[1.08]">
+                  Malaysia’s Premier Multi-Point Chassis Bar Manufacturer.
+                </h1>
+
+                <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+                  From in-house CAD stress engineering and raw steel screening to CNC laser cutting, thermal induction forging, and electrostatic coating—TYPE ONE engineers and manufactures complete vehicle chassis-strengthening systems under one roof in Kuala Lumpur.
+                </p>
+
+                <!-- Manufacturer Core Credentials -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800">
+                    <div class="text-xs font-mono text-blue-400">IN-HOUSE PRODUCTION</div>
+                    <div class="text-sm font-bold text-white mt-0.5">Design, R&D to CNC Manufacturing</div>
+                  </div>
+                  <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800">
+                    <div class="text-xs font-mono text-red-400">INDUSTRIAL PATENT</div>
+                    <div class="text-sm font-bold text-white mt-0.5">Registered Design • 100% Bolt-On</div>
+                  </div>
+                </div>
+
+                <!-- Primary Corporate Actions -->
+                <div class="flex flex-wrap gap-3 pt-1">
+                  <a href="#engineering" class="px-5 py-3 rounded-xl bg-[#0018FF] hover:bg-blue-600 text-white font-semibold text-sm transition-colors">
+                    Explore 8-Stage Factory Process →
+                  </a>
+                  <a href="#global-exports" class="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-700 font-semibold text-sm transition-colors">
+                    Global Export Network (15+ Countries)
+                  </a>
+                </div>
+
+                <!-- 4 Key Corporate Metrics -->
+                <div class="grid grid-cols-4 gap-3 pt-4 border-t border-slate-800/90">
+                  ${siteConfig.hero.stats.map(st => `
+                    <div>
+                      <div class="text-lg sm:text-xl font-bold text-white font-heading">${escapeHtml(st.value)}</div>
+                      <div class="text-[11px] text-slate-400 leading-tight mt-0.5">${escapeHtml(st.label)}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Right Column (7 Cols): Realistic Installed Underbody & Factory Showcase -->
+              <div id="hero-realistic-stage" class="lg:col-span-7">
+                ${buildHeroRealisticStageHtml()}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISION & MISSION SECTION -->
+        <section id="vision-mission" class="py-20 bg-slate-50 border-b border-slate-200">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl mb-12">
+              <div class="text-xs font-mono uppercase tracking-widest text-slate-500 mb-2">CORPORATE DIRECTION</div>
+              <h2 class="text-3xl sm:text-4xl font-bold font-heading text-slate-950">Vision & Mission</h2>
+              <p class="text-slate-600 text-base mt-2 leading-relaxed">${escapeHtml(vm.intro)}</p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-8">
+              <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-8 sm:p-10 flex flex-col justify-between border-t-4 border-t-[#0018FF]">
+                <div class="space-y-4">
+                  <h3 class="text-2xl font-bold font-heading text-[#0018FF]">${escapeHtml(vm.visionTitle)}</h3>
+                  <p class="text-lg text-slate-800 leading-relaxed">
+                    ${escapeHtml(vm.visionText)}
+                  </p>
+                </div>
+                <div class="pt-8 mt-8 border-t border-slate-100 text-xs font-mono text-slate-400">
+                  TYPE ONE® MALAYSIA • GLOBAL PERFORMANCE
+                </div>
+              </div>
+
+              <div class="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-8 sm:p-10 border-t-4 border-t-[#ED1C24] space-y-6">
+                <div>
+                  <h3 class="text-2xl font-bold font-heading text-[#ED1C24]">${escapeHtml(vm.missionTitle)}</h3>
+                  <p class="text-base text-slate-800 leading-relaxed mt-3">
+                    ${escapeHtml(vm.missionText)}
+                  </p>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                  <div class="text-xs font-mono uppercase text-slate-500 mb-3">We strive to:</div>
+                  <ul class="space-y-2.5">
+                    ${(vm.pillars || []).map(pillar => `
+                      <li class="flex items-start gap-3 text-sm text-slate-700">
+                        <span class="font-mono font-bold text-[#ED1C24]">&gt;</span>
+                        <span>${escapeHtml(pillar)}</span>
+                      </li>
+                    `).join('')}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- REDESIGNED 4K INTERACTIVE MANUFACTURING & PROCESS FLOW SECTION -->
+        <section id="engineering" class="py-24 bg-white border-b border-slate-200">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div class="grid lg:grid-cols-12 gap-10 items-start">
+              <div class="lg:col-span-5 space-y-4">
+                <div class="text-xs font-mono uppercase tracking-widest text-[#0018FF] font-semibold">IN-HOUSE MALAYSIAN MANUFACTURING</div>
+                <h2 class="text-3xl sm:text-4xl font-bold text-slate-950 font-heading leading-tight">${escapeHtml(siteConfig.about.headline)}</h2>
+                <p class="text-slate-600 text-sm sm:text-base leading-relaxed">${escapeHtml(siteConfig.about.description)}</p>
+              </div>
+
+              <div class="lg:col-span-7 grid sm:grid-cols-2 gap-4">
+                ${siteConfig.about.highlights.map((h, i) => `
+                  <div class="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <div class="text-xs font-mono ${i % 2 === 0 ? 'text-[#0018FF]' : 'text-[#ED1C24]'} font-semibold">${escapeHtml(h.spec)}</div>
+                    <h3 class="text-base font-bold text-slate-950 font-heading">${escapeHtml(h.title)}</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">${escapeHtml(h.description)}</p>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div id="engineering-interactive-root">
+              ${buildEngineeringInteractiveHtml()}
+            </div>
+          </div>
+        </section>
+
+        <!-- INTERACTIVE 3D GLOBAL EXPORTS SECTION -->
+        <section id="global-exports" class="py-20 bg-[#070C17] text-white border-b border-slate-800">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+              <div>
+                <div class="text-xs font-mono uppercase tracking-widest text-blue-400 mb-2">INTERNATIONAL FOOTPRINT</div>
+                <h2 class="text-3xl sm:text-4xl font-bold font-heading text-white">Global Exports Network</h2>
+                <p class="text-slate-400 text-sm sm:text-base mt-2 max-w-2xl">
+                  Manufactured in Kuala Lumpur and exported across ${globalExports.length} markets in Asia, Europe, and South America. Select any market below to orient the 3D globe.
+                </p>
+              </div>
+
+              <div class="inline-flex rounded-lg bg-slate-900 p-1 border border-slate-800 self-start">
+                <button type="button" onclick="setExportViewMode('3d-globe')" class="px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${state.exportViewMode === '3d-globe' ? 'bg-[#0018FF] text-white' : 'text-slate-400 hover:text-white'}">
+                  3D Interactive Globe
+                </button>
+                <button type="button" onclick="setExportViewMode('3d-map')" class="px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${state.exportViewMode === '3d-map' ? 'bg-[#0018FF] text-white' : 'text-slate-400 hover:text-white'}">
+                  3D Tilt World Map
+                </button>
+              </div>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-8 items-start">
+              <div class="lg:col-span-7">
+                ${state.exportViewMode === '3d-globe' ? `
+                  <div class="relative rounded-xl bg-[#040811] border border-slate-800 overflow-hidden min-h-[500px] flex items-center justify-center">
+                    <div class="absolute top-4 left-4 z-20 text-xs font-mono text-slate-400">
+                      Drag to rotate • Scroll to zoom
+                    </div>
+                    <div class="absolute top-4 right-4 z-20 flex items-center gap-1.5">
+                      <button id="globe-rotate-btn" type="button" onclick="toggleGlobeRotation()" class="px-3 py-1.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs text-slate-200 cursor-pointer">
+                        ${state.autoRotateGlobe ? 'Pause Rotation' : 'Auto Rotate'}
+                      </button>
+                      <button type="button" onclick="zoomGlobe(-0.35)" class="w-7 h-7 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-mono text-xs cursor-pointer">+</button>
+                      <button type="button" onclick="zoomGlobe(0.35)" class="w-7 h-7 rounded bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-mono text-xs cursor-pointer">−</button>
+                    </div>
+                    <div id="typeone-3d-globe" class="w-full h-[500px] flex items-center justify-center cursor-grab active:cursor-grabbing"></div>
+                  </div>
+                ` : `
+                  <div class="map-3d-perspective" onmousemove="handle3DMapTilt(event)" onmouseleave="reset3DMapTilt()">
+                    <div id="map-3d-stage" class="map-3d-card relative rounded-xl bg-[#040811] border border-slate-800 overflow-hidden min-h-[500px] flex items-center justify-center">
+                      <img src="/assets/global-exports-ref.jpg" alt="TYPE ONE Global Exports Map" class="w-full h-[500px] object-cover object-bottom opacity-60" />
+
+                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 w-full h-full pointer-events-none">
+                        ${globalExports.filter(c => !c.isHQ).map((dest) => {
+                          const dPos = latLngToPercent(dest.lat, dest.lng);
+                          const midX = (hqPos.x + dPos.x) / 2;
+                          const midY = Math.min(hqPos.y, dPos.y) - 10;
+                          const isSel = dest.id === state.selectedExportId;
+                          return `
+                            <path
+                              d="M ${hqPos.x} ${hqPos.y} Q ${midX} ${midY} ${dPos.x} ${dPos.y}"
+                              fill="none"
+                              stroke="${isSel ? '#ED1C24' : '#3B82F6'}"
+                              stroke-width="${isSel ? '0.75' : '0.35'}"
+                              class="flight-line"
+                              opacity="${isSel ? '1' : '0.65'}"
+                            />
+                          `;
+                        }).join('')}
+                      </svg>
+
+                      ${globalExports.map(c => {
+                        const pos = latLngToPercent(c.lat, c.lng);
+                        const isSel = c.id === state.selectedExportId;
+                        return `
+                          <button
+                            type="button"
+                            onclick="selectExportCountry('${escapeHtml(c.id)}')"
+                            style="left: ${pos.x}%; top: ${pos.y}%;"
+                            class="absolute -translate-x-1/2 -translate-y-full z-20 cursor-pointer"
+                            title="${escapeHtml(c.country)}"
+                          >
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border shadow ${
+                              isSel
+                                ? 'bg-[#ED1C24] text-white border-white scale-110 block'
+                                : c.isHQ
+                                ? 'bg-[#0018FF] text-white border-white block'
+                                : 'bg-slate-950/90 text-white border-slate-600 hover:border-white block'
+                            }">
+                              ${escapeHtml(c.iso)}
+                            </span>
+                          </button>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                `}
+              </div>
+
+              <div class="lg:col-span-5 space-y-5">
+                <div id="export-detail-card">
+                  ${selectedExport ? buildExportDetailHtml(selectedExport) : ''}
+                </div>
+
+                <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-5 space-y-3">
+                  <div class="text-xs font-mono text-slate-400 uppercase">Export Markets (${globalExports.length})</div>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    ${globalExports.map(c => {
+                      const active = c.id === state.selectedExportId;
+                      return `
+                        <button
+                          type="button"
+                          data-country-btn="${escapeHtml(c.id)}"
+                          onclick="selectExportCountry('${escapeHtml(c.id)}')"
+                          class="px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between border transition-colors cursor-pointer ${
+                            active
+                              ? 'bg-[#0018FF] text-white border-[#0018FF]'
+                              : 'bg-slate-900/70 text-slate-300 border-slate-800 hover:border-slate-600 hover:text-white'
+                          }"
+                        >
+                          <span class="truncate">${escapeHtml(c.country.replace(' (Global HQ)', ''))}</span>
+                          <span class="font-mono text-[10px] opacity-75 ml-1">${escapeHtml(c.iso)}</span>
+                        </button>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3-PHASE CHASSIS ENGINEERING SYSTEM -->
+        <section id="three-phase" class="py-20 bg-slate-50 border-b border-slate-200">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl mb-12">
+              <div class="text-xs font-mono uppercase tracking-widest text-slate-500 mb-2">CHASSIS TUNING ARCHITECTURE</div>
+              <h2 class="text-3xl sm:text-4xl font-bold text-slate-950 font-heading">${escapeHtml(siteConfig.engineering.headline)}</h2>
+              <p class="text-slate-600 mt-2 text-base">${escapeHtml(siteConfig.engineering.subheadline)}</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4 mb-8">
+              ${phases.map((p, idx) => `
+                <button type="button" onclick="setPhaseTab(${idx})" class="text-left p-6 rounded-xl border transition-colors cursor-pointer ${
+                  state.activePhaseTab === idx
+                    ? 'bg-white border-slate-950 shadow-sm'
+                    : 'bg-slate-100/70 border-slate-200 hover:bg-white'
+                }">
+                  <div class="flex items-center justify-between text-xs font-mono mb-2">
+                    <span class="${state.activePhaseTab === idx ? 'text-[#0018FF] font-bold' : 'text-slate-500'}">${escapeHtml(p.phaseNumber)}</span>
+                    <span class="text-slate-500">Rigidity Index ${escapeHtml(p.rigidityScore)}%</span>
+                  </div>
+                  <h3 class="text-lg font-bold text-slate-950 font-heading">${escapeHtml(p.title)}</h3>
+                  <p class="text-xs text-slate-500 mt-1">${escapeHtml(p.subtitle)}</p>
+                </button>
+              `).join('')}
+            </div>
+
+            <div class="rounded-xl bg-white border border-slate-200 p-8 sm:p-10 grid lg:grid-cols-12 gap-8 items-center">
+              <div class="lg:col-span-7 space-y-5">
+                <div class="text-xs font-mono text-[#0018FF] font-semibold uppercase">${escapeHtml(activePhase.phaseNumber)}</div>
+                <h3 class="text-2xl font-bold text-slate-950 font-heading">${escapeHtml(activePhase.title)} — ${escapeHtml(activePhase.subtitle)}</h3>
+                <p class="text-slate-600 text-sm sm:text-base leading-relaxed">${escapeHtml(activePhase.description)}</p>
+                <ul class="space-y-2 pt-2">
+                  ${activePhase.benefits.map(b => `
+                    <li class="flex items-start gap-2.5 text-sm text-slate-800">
+                      <span class="text-[#0018FF] font-bold">•</span>
+                      <span>${escapeHtml(b)}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+              </div>
+              <div class="lg:col-span-5">
+                <div class="rounded-lg bg-slate-950 p-6 flex flex-col items-center">
+                  <img src="${escapeHtml(activePhase.diagramImage)}" alt="${escapeHtml(activePhase.title)}" class="w-full h-56 object-contain" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MANUFACTURED VEHICLE APPLICATION SERIES (SHOWCASE ONLY — NO RESELLING) -->
+        <section id="catalog" class="py-20 bg-white border-b border-slate-200">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+              <div>
+                <div class="text-xs font-mono uppercase tracking-widest text-slate-500 mb-2">MANUFACTURED PRODUCT LINEUP</div>
+                <h2 class="text-3xl sm:text-4xl font-bold text-slate-950 font-heading">Engineered Vehicle Application Series</h2>
+              </div>
+              <div class="w-full md:w-80">
+                <input id="catalog-search-input" type="text" value="${escapeHtml(state.searchQuery)}" oninput="setSearchQuery(this.value)" placeholder="Filter by vehicle model or code..." class="w-full px-4 py-2.5 rounded-lg bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#0018FF]" />
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-6">
+              ${allBrands.map(b => {
+                const active = state.selectedBrand.toLowerCase() === b.toLowerCase();
+                return `
+                  <button type="button" onclick="setBrandFilter('${escapeHtml(b)}')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                    active
+                      ? 'bg-slate-950 text-white border-slate-950'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                  }">
+                    ${escapeHtml(b)}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-200">
+              <div class="flex flex-wrap items-center gap-3">
+                <select onchange="setPartFilter(this.value)" class="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 cursor-pointer">
+                  ${allParts.map(pt => `<option value="${escapeHtml(pt)}" ${state.selectedPartType === pt ? 'selected' : ''}>Bar Type: ${escapeHtml(pt)}</option>`).join('')}
+                </select>
+                <select onchange="setPhaseFilter(this.value)" class="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 cursor-pointer">
+                  <option value="All" ${state.selectedPhase === 'All' ? 'selected' : ''}>Architecture: All Phases</option>
+                  <option value="Phase 1: Comfort" ${state.selectedPhase === 'Phase 1: Comfort' ? 'selected' : ''}>Phase 1: Comfort</option>
+                  <option value="Phase 2: Stability" ${state.selectedPhase === 'Phase 2: Stability' ? 'selected' : ''}>Phase 2: Stability</option>
+                  <option value="Phase 3: Performance" ${state.selectedPhase === 'Phase 3: Performance' ? 'selected' : ''}>Phase 3: Performance</option>
+                </select>
+                <button type="button" onclick="resetFilters()" class="text-xs text-slate-500 hover:text-slate-900 underline cursor-pointer">Reset</button>
+              </div>
+              <span id="catalog-count" class="text-xs font-mono text-slate-500">${filtered.length} engineered components</span>
+            </div>
+
+            <div id="catalog-grid">
+              ${buildProductGridHtml(filtered)}
+            </div>
+          </div>
+        </section>
+
+        <!-- CORPORATE CONTACT, DISTRIBUTOR PARTNERSHIP & WARRANTY REGISTRATION -->
+        <section id="contact" class="py-20 bg-slate-50 border-b border-slate-200">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-5 space-y-6">
+              <div class="text-xs font-mono uppercase tracking-widest text-slate-500">CORPORATE HEADQUARTERS</div>
+              <h2 class="text-3xl font-bold text-slate-950 font-heading">Distributor Partnerships & Warranty Verification</h2>
+              <p class="text-slate-600 text-sm leading-relaxed">
+                Connect with TYPE ONE manufacturing headquarters in Kuala Lumpur for regional dealer/distributor applications, technical R&D inquiries, or official Lifetime Structural Warranty registration.
+              </p>
+              <div class="space-y-4 pt-2 text-sm">
+                <div class="p-4 rounded-xl bg-white border border-slate-200">
+                  <div class="text-xs text-slate-400 uppercase font-mono">Manufacturing Plant & HQ</div>
+                  <div class="font-medium text-slate-900 mt-1">${escapeHtml(siteConfig.contact.address)}</div>
+                </div>
+                <div class="p-4 rounded-xl bg-white border border-slate-200">
+                  <div class="text-xs text-slate-400 uppercase font-mono">Corporate Telephone & Email</div>
+                  <div class="font-medium text-slate-900 mt-1">${escapeHtml(siteConfig.contact.phoneOffice)} / ${escapeHtml(siteConfig.contact.phoneMobile)}</div>
+                  <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(siteConfig.contact.email)}</div>
+                </div>
+                <div class="p-4 rounded-xl bg-white border border-slate-200">
+                  <div class="text-xs text-slate-400 uppercase font-mono">Factory Operating Hours</div>
+                  <div class="text-slate-900 mt-1">${escapeHtml(siteConfig.contact.hoursWeekday)}</div>
+                  <div class="text-xs text-slate-500">${escapeHtml(siteConfig.contact.hoursSaturday)} (${escapeHtml(siteConfig.contact.hoursSunday)})</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-7">
+              <div class="rounded-xl bg-white border border-slate-200 p-6 sm:p-8">
+                <div class="grid grid-cols-2 gap-2 p-1 rounded-lg bg-slate-100 mb-6">
+                  <button type="button" onclick="switchPortalTab('inquiry')" class="py-2 px-4 rounded-md text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${state.activeFormTab === 'inquiry' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600 hover:text-slate-950'}">
+                    Distributor & Technical Inquiry
+                  </button>
+                  <button type="button" onclick="switchPortalTab('warranty')" class="py-2 px-4 rounded-md text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${state.activeFormTab === 'warranty' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600 hover:text-slate-950'}">
+                    Warranty Registration
+                  </button>
+                </div>
+
+                ${state.toastMessage ? `
+                  <div class="mb-6 p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">
+                    ${escapeHtml(state.toastMessage)}
+                  </div>
+                ` : ''}
+
+                ${state.activeFormTab === 'inquiry' ? `
+                  <form onsubmit="submitInquiryForm(event)" class="space-y-4">
+                    <div class="grid sm:grid-cols-3 gap-2">
+                      ${['Dealer Application', 'Vehicle Fitment Inquiry', 'General Support'].map(t => `
+                        <button type="button" onclick="switchPortalTab('inquiry', '${t}')" class="py-2 px-3 rounded-lg text-xs font-medium border text-center cursor-pointer ${state.inquiryType === t ? 'bg-slate-950 text-white border-slate-950' : 'bg-white border-slate-200 text-slate-600'}">
+                          ${t}
+                        </button>
+                      `).join('')}
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Contact Name *</label>
+                        <input required name="name" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Phone / WhatsApp *</label>
+                        <input required name="phone" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Corporate Email *</label>
+                        <input required name="email" type="email" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">${state.inquiryType === 'Dealer Application' ? 'Company Name & Country/City *' : 'Vehicle Model / Subject *'}</label>
+                        <input required id="inq-vehicle" name="vehicleOrLocation" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-slate-700 mb-1">Inquiry Message *</label>
+                      <textarea required id="inq-message" name="message" rows="3" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 px-5 rounded-lg bg-[#0018FF] hover:bg-blue-700 text-white font-semibold text-sm transition-colors cursor-pointer">
+                      Submit to TYPE ONE HQ
+                    </button>
+                  </form>
+                ` : `
+                  <form onsubmit="submitWarrantyForm(event)" class="space-y-4">
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Owner Full Name *</label>
+                        <input required name="customerName" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Phone Number *</label>
+                        <input required name="phone" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Email *</label>
+                        <input required name="email" type="email" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Vehicle Model & Year *</label>
+                        <input required name="carModel" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                    </div>
+                    <div class="grid sm:grid-cols-3 gap-4">
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Application Code *</label>
+                        <input required name="productSku" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Receipt / Serial No. *</label>
+                        <input required name="serialOrInvoice" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                      <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Install Date *</label>
+                        <input required name="installDate" type="date" value="2026-11-16" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-slate-700 mb-1">Authorized Dealer / Workshop Name *</label>
+                      <input required name="dealerName" type="text" class="w-full px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-sm text-slate-900" />
+                    </div>
+                    <button type="submit" class="w-full py-3 px-5 rounded-lg bg-[#ED1C24] hover:bg-red-700 text-white font-semibold text-sm transition-colors cursor-pointer">
+                      Register Official Lifetime Warranty
+                    </button>
+                  </form>
+                `}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="bg-white py-12 text-slate-500 text-sm">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+              <img src="/assets/typeone-logo.png" alt="TYPE ONE" class="h-8 w-auto object-contain" />
+              <div class="text-xs text-slate-500">
+                <div class="font-semibold text-slate-900">${escapeHtml(siteConfig.contact.companyLegalName)}</div>
+                <div>${escapeHtml(siteConfig.contact.address)}</div>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-6 text-xs font-medium text-slate-600">
+              <a href="#engineering" class="hover:text-slate-950">Manufacturing Process</a>
+              <a href="#vision-mission" class="hover:text-slate-950">Vision & Mission</a>
+              <a href="#global-exports" class="hover:text-slate-950">Global Exports</a>
+              <a href="#catalog" class="hover:text-slate-950">Vehicle Applications</a>
+              <a href="/admin" class="text-[#0018FF] hover:underline">Admin CMS</a>
+            </div>
+          </div>
+        </footer>
+
+        <!-- Technical Specification Modal (No retail pricing or e-commerce checkout) -->
+        ${state.modalProduct ? `
+          <div class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4" onclick="closeModal()">
+            <div class="bg-white border border-slate-200 rounded-xl max-w-xl w-full overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+              <div class="p-6 bg-slate-50 relative flex items-center justify-center h-64 border-b border-slate-200">
+                <img src="${escapeHtml(state.modalProduct.image)}" alt="${escapeHtml(state.modalProduct.name)}" class="max-h-52 w-auto object-contain" />
+                <button type="button" onclick="closeModal()" class="absolute top-3 right-3 w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center hover:bg-slate-100 cursor-pointer">✕</button>
+              </div>
+              <div class="p-6 space-y-4">
+                <div class="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-600">
+                  <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-900">${escapeHtml(state.modalProduct.phase)}</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100">APPLICATION CODE: ${escapeHtml(state.modalProduct.sku)}</span>
+                  <span class="px-2 py-0.5 rounded bg-slate-100">${escapeHtml(state.modalProduct.mountingPoints)}-Point OEM Mount</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-950 font-heading">${escapeHtml(state.modalProduct.name)}</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                  <strong>Engineering & Metallurgy:</strong> ${escapeHtml(state.modalProduct.materialSpec)}. Manufactured in Kuala Lumpur under registered Malaysian industrial design for 100% bolt-on installation at factory chassis mounting points.
+                </p>
+                <div class="flex gap-3 pt-2">
+                  <button type="button" onclick="inquireProduct('${escapeHtml(state.modalProduct.id)}')" class="flex-1 py-2.5 px-4 rounded-lg bg-[#0018FF] hover:bg-blue-700 text-white font-semibold text-xs text-center cursor-pointer">
+                    Dealer / Technical Inquiry
+                  </button>
+                  <button type="button" onclick="closeModal()" class="py-2.5 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs text-center cursor-pointer">
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+      `;
+
+      if (state.exportViewMode === '3d-globe') {
+        setTimeout(() => init3DGlobe(), 40);
+      }
+    }
+
+    loadCMS();
+  </script>
+</body>
+</html>
