@@ -120,6 +120,7 @@ export interface CMSDatabase {
 }
 
 const DB_FILE_PATH = path.join(process.cwd(), 'data', 'cms-db.json');
+const TMP_DB_FILE_PATH = path.join('/tmp', 'typeone-cms-db.json');
 
 export const INITIAL_CMS_DATA: CMSDatabase = {
   lastUpdated: new Date().toISOString(),
@@ -549,6 +550,9 @@ export const INITIAL_CMS_DATA: CMSDatabase = {
 
 export function getCMSData(): CMSDatabase {
   try {
+    if (fs.existsSync(TMP_DB_FILE_PATH)) {
+      return JSON.parse(fs.readFileSync(TMP_DB_FILE_PATH, 'utf-8')) as CMSDatabase;
+    }
     if (!fs.existsSync(DB_FILE_PATH)) {
       const dir = path.dirname(DB_FILE_PATH);
       if (!fs.existsSync(dir)) {
@@ -565,11 +569,17 @@ export function getCMSData(): CMSDatabase {
 }
 
 export function saveCMSData(data: CMSDatabase): CMSDatabase {
-  const dir = path.dirname(DB_FILE_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
   data.lastUpdated = new Date().toISOString();
-  fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  const payload = JSON.stringify(data, null, 2);
+  try {
+    const dir = path.dirname(DB_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DB_FILE_PATH, payload, 'utf-8');
+  } catch {
+    // Fallback for read-only serverless environments like Vercel
+    fs.writeFileSync(TMP_DB_FILE_PATH, payload, 'utf-8');
+  }
   return data;
 }

@@ -81,6 +81,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, data });
     }
 
+    if (body.action === 'add_export_country') {
+      const c = body.exportCountry || {};
+      const newCountry = {
+        id: `exp-${Date.now().toString().slice(-4)}`,
+        country: c.country || 'New Market',
+        flag: c.flag || '',
+        iso: String(c.iso || 'XX').toUpperCase(),
+        region: c.region || 'International',
+        lat: Number(c.lat) || 0,
+        lng: Number(c.lng) || 0,
+        isHQ: false,
+        hubCity: c.hubCity || c.country || '',
+        focusModels: c.focusModels || 'Multi-Point Strut & Anti-Roll Bars',
+        status: c.status || 'Active Export Market',
+      };
+      const dbAny = data as unknown as { globalExports?: unknown[] };
+      if (!Array.isArray(dbAny.globalExports)) dbAny.globalExports = [];
+      dbAny.globalExports.push(newCountry);
+      saveCMSData(data);
+      return NextResponse.json({ ok: true, data });
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
@@ -100,6 +122,7 @@ export async function PUT(req: NextRequest) {
     const updated = saveCMSData({
       ...current,
       ...(body.siteConfig ? { siteConfig: body.siteConfig } : {}),
+      ...(body.globalExports ? { globalExports: body.globalExports } : {}),
       ...(body.products ? { products: body.products } : {}),
       ...(body.phases ? { phases: body.phases } : {}),
       ...(body.warranties ? { warranties: body.warranties } : {}),
