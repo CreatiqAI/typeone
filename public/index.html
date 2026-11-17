@@ -34,6 +34,36 @@
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
+    html { scroll-padding-top: 5rem; }
+    h1, h2, h3 { text-wrap: balance; }
+    p { text-wrap: pretty; }
+    :focus-visible {
+      outline: 2px solid #0018FF;
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
+    #blueprint-3d :focus-visible, #global-exports :focus-visible { outline-color: #93C5FD; }
+    .hero-grid {
+      background-image:
+        linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+      background-size: 72px 72px;
+      -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, #000 0%, transparent 75%);
+      mask-image: radial-gradient(ellipse 75% 65% at 50% 0%, #000 0%, transparent 75%);
+    }
+    .nav-link { position: relative; padding: 0.5rem 0; }
+    .nav-link::after {
+      content: '';
+      position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px;
+      background: #0018FF;
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.25s ease-out;
+    }
+    .nav-link:hover::after, .nav-link:focus-visible::after { transform: scaleX(1); }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto !important; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
     .map-3d-perspective {
       perspective: 1100px;
     }
@@ -364,7 +394,8 @@
       // Realistic Hero Showcase State
       heroMode: 'blueprint3d', // 'blueprint3d' | 'underbody' | 'factory'
       activeInstallIndex: 0,
-      activeHeroFactoryStep: 1
+      activeHeroFactoryStep: 1,
+      catalogExpanded: false
     };
 
     let globeInstance = null;
@@ -407,14 +438,14 @@
     // Hero Realistic Interactive Handlers
     window.setHeroMode = (mode) => {
       state.heroMode = mode;
-      const root = document.getElementById('hero-realistic-stage');
-      if (root) root.innerHTML = buildHeroRealisticStageHtml();
+      const root = document.getElementById('blueprint-section-root');
+      if (root) root.innerHTML = buildBlueprintSectionHtml();
     };
 
     window.selectHeroInstall = (idx) => {
       state.activeInstallIndex = idx;
       const root = document.getElementById('hero-realistic-stage');
-      if (root) root.innerHTML = buildHeroRealisticStageHtml();
+      if (root) root.innerHTML = buildBlueprintStageHtml();
     };
 
     window.selectHeroFactoryPhoto = (idx) => {
@@ -423,100 +454,88 @@
       if (root) root.innerHTML = buildHeroRealisticStageHtml();
     };
 
+    const NAV_LINKS = [
+      { href: '#blueprint-3d', label: '3D Blueprint' },
+      { href: '#engineering', label: 'Manufacturing' },
+      { href: '#global-exports', label: 'Global Exports' },
+      { href: '#three-phase', label: '3-Phase System' },
+      { href: '#catalog', label: 'Applications' },
+      { href: '#vision-mission', label: 'About' },
+      { href: '#contact', label: 'Warranty', onclick: "switchPortalTab('warranty')" }
+    ];
+
+    window.toggleMobileNav = (force) => {
+      const nav = document.getElementById('mobile-nav');
+      const btn = document.getElementById('mobile-nav-toggle');
+      if (!nav) return;
+      const open = typeof force === 'boolean' ? force : nav.classList.contains('hidden');
+      nav.classList.toggle('hidden', !open);
+      if (btn) {
+        btn.setAttribute('aria-expanded', String(open));
+        btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      }
+    };
+
+    function buildBlueprintStageHtml() {
+      if (state.heroMode === 'underbody') return buildHeroRealisticStageHtml();
+      return `
+        <div class="rounded-2xl overflow-hidden border border-blue-300/20 shadow-2xl shadow-black/40 bg-[#071a36]">
+          <iframe
+            src="/blueprint"
+            scrolling="no"
+            title="TYPE ONE 3D Stable Bar Mounting Blueprint"
+            class="w-full h-[720px] lg:h-[760px] border-0 block"
+            loading="lazy"
+          ></iframe>
+        </div>
+        <p class="text-xs text-slate-400 text-center">Drag to orbit · click a numbered pin or a part in the list to fly to its mounting point</p>
+      `;
+    }
+
+    function buildBlueprintSectionHtml() {
+      const tab = (mode, label) => `
+        <button
+          type="button"
+          role="tab"
+          aria-selected="${state.heroMode === mode}"
+          onclick="setHeroMode('${mode}')"
+          class="h-11 px-5 rounded-full text-sm font-semibold transition-colors duration-200 cursor-pointer ${
+            state.heroMode === mode ? 'bg-white text-slate-950' : 'text-slate-300 hover:text-white'
+          }"
+        >${label}</button>`;
+      return `
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div class="max-w-2xl">
+            <div class="text-xs font-mono uppercase tracking-[0.22em] text-blue-300 mb-3">How it fits</div>
+            <h2 class="text-3xl sm:text-4xl font-semibold font-heading tracking-tight text-white">
+              Six bars. One rigid chassis.
+            </h2>
+            <p class="text-slate-300 text-base mt-3 leading-relaxed">
+              See where every TYPE ONE stable bar bolts on — suspension towers, front and rear subframes, and the floorpan tunnel.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div role="tablist" aria-label="Blueprint view" class="inline-flex rounded-full bg-white/5 p-1 border border-white/10">
+              ${tab('blueprint3d', '3D Blueprint')}
+              ${tab('underbody', 'Installed Photos')}
+            </div>
+            <a href="/blueprint" target="_blank" rel="noopener" class="inline-flex items-center gap-2 h-11 px-4 rounded-full text-sm font-medium text-slate-300 hover:text-white border border-white/10 hover:border-white/30 transition-colors duration-200">
+              Fullscreen
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+            </a>
+          </div>
+        </div>
+        <div id="hero-realistic-stage" class="space-y-4">
+          ${buildBlueprintStageHtml()}
+        </div>
+      `;
+    }
+
     function buildHeroRealisticStageHtml() {
       const inst = REAL_CHASSIS_INSTALLATIONS[state.activeInstallIndex] || REAL_CHASSIS_INSTALLATIONS[0];
-      const factoryHighlights = [
-        {
-          title: 'CNC Fiber Laser Cutting (4.5mm Plates)',
-          tag: 'IN-HOUSE R&D & LASER',
-          spec: '±0.05mm Optical Precision',
-          img: `/assets/strut-2.png?v=${IMG_VER}`,
-          desc: 'All 4.3mm–4.5mm steel mounting brackets are cut in-house on high-wattage fiber lasers for 100% factory bolt-hole accuracy.'
-        },
-        {
-          title: '950°C Thermal Induction Forging',
-          tag: 'SOLID SPRING STEEL',
-          spec: '16mm – 28mm Solid Anti-Roll Bars',
-          img: `/assets/arb-3.png?v=${IMG_VER}`,
-          desc: 'Solid spring steel sway bar ends are induction-heated and die-stamped into one-piece mounting blades with zero welded end-tabs.'
-        },
-        {
-          title: '360° Master-Jig TIG Welding',
-          tag: 'STRUCTURAL FUSION',
-          spec: '1.4mm – 1.6mm High-Tensile Oval Steel',
-          img: `/assets/strut-5.png?v=${IMG_VER}`,
-          desc: 'Each multi-point bar is welded inside model-specific steel master jigs to guarantee plug-and-play chassis fitment.'
-        },
-        {
-          title: 'Electrostatic Epoxy Powder Coating',
-          tag: 'FINISHING & QC',
-          spec: '200°C Cured Royal Blue Finish',
-          img: `/assets/arb-8.png?v=${IMG_VER}`,
-          desc: 'Finished with chemical phosphating and oven-cured electrostatic epoxy powder coating, backed by our Lifetime Structural Warranty.'
-        }
-      ];
-      const activeFac = factoryHighlights[state.activeHeroFactoryStep] || factoryHighlights[0];
 
       return `
-        <div class="rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden">
-          <!-- Stage Header Switcher -->
-          <div class="p-4 sm:p-5 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <span class="text-[11px] font-mono uppercase tracking-wider text-blue-400 block">INTERACTIVE ENGINEERING SHOWCASE</span>
-              <h2 class="text-base font-bold text-white font-heading">
-                ${state.heroMode === 'blueprint3d'
-                  ? '3D Multi-Point Chassis Mounting Blueprint'
-                  : state.heroMode === 'underbody'
-                  ? 'Actual Vehicle Underbody Multi-Point Fitment'
-                  : 'Kuala Lumpur Factory Production Floor'}
-              </h2>
-            </div>
-
-            <div class="inline-flex rounded-lg bg-slate-900 p-1 border border-slate-800">
-              <button
-                type="button"
-                onclick="setHeroMode('blueprint3d')"
-                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                  state.heroMode === 'blueprint3d' ? 'bg-[#0018FF] text-white' : 'text-slate-400 hover:text-white'
-                }"
-              >
-                3D Blueprint
-              </button>
-              <button
-                type="button"
-                onclick="setHeroMode('underbody')"
-                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                  state.heroMode === 'underbody' ? 'bg-[#0018FF] text-white' : 'text-slate-400 hover:text-white'
-                }"
-              >
-                Installed Photos
-              </button>
-              <button
-                type="button"
-                onclick="setHeroMode('factory')"
-                class="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                  state.heroMode === 'factory' ? 'bg-[#ED1C24] text-white' : 'text-slate-400 hover:text-white'
-                }"
-              >
-                Factory Floor
-              </button>
-            </div>
-          </div>
-
-          ${state.heroMode === 'blueprint3d' ? `
-            <div class="relative bg-[#071a36]">
-              <iframe
-                src="/blueprint?stage=1"
-                scrolling="no"
-                title="TYPE ONE 3D Chassis Mounting Blueprint"
-                class="w-full h-[500px] border-0 block"
-              ></iframe>
-              <div class="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
-                <span>Drag to orbit 3D chassis • Click pins 1–6 to fly to mounting point</span>
-                <a href="#blueprint-3d" class="text-blue-400 hover:text-white font-semibold">Expand Full-Width View ↓</a>
-              </div>
-            </div>
-          ` : state.heroMode === 'underbody' ? `
+        <div class="rounded-2xl bg-slate-900/80 border border-white/10 overflow-hidden">
             <!-- MODE 1: Real Underbody Hoist Photo + Real Installed Component Photography -->
             <div class="p-5 sm:p-6 space-y-5">
               <div class="grid sm:grid-cols-12 gap-4 items-stretch">
@@ -594,54 +613,6 @@
                 }).join('')}
               </div>
             </div>
-          ` : `
-            <!-- MODE 2: Real 4K Factory Floor Manufacturing Photography -->
-            <div class="p-5 sm:p-6 space-y-4">
-              <div class="relative h-72 sm:h-80 rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
-                <img
-                  src="${activeFac.img}"
-                  alt="${escapeHtml(activeFac.title)}"
-                  class="w-full h-full object-cover"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
-                <div class="absolute top-3 left-3 flex items-center gap-2">
-                  <span class="px-2.5 py-1 rounded bg-[#ED1C24] text-white font-mono text-[11px] font-bold">
-                    ${escapeHtml(activeFac.tag)}
-                  </span>
-                  <span class="px-2.5 py-1 rounded bg-slate-950/85 text-slate-200 border border-white/15 font-mono text-[11px]">
-                    ${escapeHtml(activeFac.spec)}
-                  </span>
-                </div>
-                <div class="absolute bottom-4 left-4 right-4">
-                  <h3 class="text-xl font-bold text-white font-heading">${escapeHtml(activeFac.title)}</h3>
-                  <p class="text-xs text-slate-300 mt-1 max-w-xl">${escapeHtml(activeFac.desc)}</p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                ${factoryHighlights.map((fh, idx) => {
-                  const active = state.activeHeroFactoryStep === idx;
-                  return `
-                    <button
-                      type="button"
-                      onclick="selectHeroFactoryPhoto(${idx})"
-                      class="group rounded-xl overflow-hidden border text-left transition-all cursor-pointer ${
-                        active ? 'border-[#ED1C24] ring-1 ring-[#ED1C24]' : 'border-slate-800 opacity-75 hover:opacity-100'
-                      }"
-                    >
-                      <div class="h-16 bg-slate-950 overflow-hidden">
-                        <img src="${fh.img}" alt="${escapeHtml(fh.title)}" class="w-full h-full object-cover" />
-                      </div>
-                      <div class="p-2 bg-slate-950">
-                        <div class="text-[10px] font-mono text-slate-400 truncate">${escapeHtml(fh.tag)}</div>
-                        <div class="text-[11px] font-bold text-white truncate">${escapeHtml(fh.title)}</div>
-                      </div>
-                    </button>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          `}
         </div>
       `;
     }
@@ -1454,6 +1425,10 @@
           </div>
         `;
       }
+      const CATALOG_PAGE = 9;
+      const total = filtered.length;
+      const more = total > CATALOG_PAGE && !state.catalogExpanded;
+      if (more) filtered = filtered.slice(0, CATALOG_PAGE);
       return `
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           ${filtered.map(product => `
@@ -1486,8 +1461,22 @@
             </div>
           `).join('')}
         </div>
+        ${more ? `
+          <div class="mt-10 flex flex-col items-center gap-3">
+            <span class="text-xs font-mono text-slate-500">Showing ${CATALOG_PAGE} of ${total}</span>
+            <button type="button" onclick="expandCatalog()" class="inline-flex items-center h-12 px-7 rounded-full border border-slate-300 hover:border-slate-950 text-sm font-semibold text-slate-900 transition-colors duration-200 cursor-pointer">
+              Show all ${total} components
+            </button>
+          </div>
+        ` : ''}
       `;
     }
+
+    window.expandCatalog = () => {
+      state.catalogExpanded = true;
+      const container = document.getElementById('catalog-grid');
+      if (container) container.innerHTML = buildProductGridHtml(getFilteredProducts());
+    };
 
     window.submitInquiryForm = async (e) => {
       e.preventDefault();
@@ -1577,126 +1566,76 @@
           </div>
         ` : ''}
 
-        <!-- Clean White Corporate Header -->
-        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-6">
-            <a href="#" class="flex items-center shrink-0">
-              <img src="/assets/typeone-logo.png" alt="TYPE ONE - The Proven Stable Bar" class="h-10 sm:h-11 w-auto object-contain" />
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 lg:h-[72px] flex items-center justify-between gap-6">
+            <a href="#top" class="flex items-center shrink-0 rounded" aria-label="TYPE ONE home">
+              <img src="/assets/typeone-logo.png" alt="TYPE ONE - The Proven Stable Bar" class="h-9 lg:h-10 w-auto object-contain" />
             </a>
 
-            <nav class="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-700">
-              <a href="#blueprint-3d" class="text-[#0018FF] font-semibold hover:underline transition-colors">3D Mounting Blueprint</a>
-              <a href="#engineering" class="hover:text-[#0018FF] transition-colors">Manufacturing & R&D</a>
-              <a href="#vision-mission" class="hover:text-[#0018FF] transition-colors">Vision & Mission</a>
-              <a href="#global-exports" class="hover:text-[#0018FF] transition-colors">Global Exports</a>
-              <a href="#three-phase" class="hover:text-[#0018FF] transition-colors">3-Phase Architecture</a>
-              <a href="#catalog" class="hover:text-[#0018FF] transition-colors">Vehicle Applications</a>
-              <a href="#contact" onclick="switchPortalTab('warranty')" class="hover:text-[#0018FF] transition-colors">Warranty</a>
+            <nav class="hidden xl:flex items-center gap-8 text-[13px] font-medium text-slate-600" aria-label="Primary">
+              ${NAV_LINKS.map(n => `<a href="${n.href}" ${n.onclick ? `onclick="${n.onclick}"` : ''} class="nav-link hover:text-slate-950 transition-colors duration-200">${n.label}</a>`).join('')}
             </nav>
 
-            <div class="flex items-center gap-3">
-              <a href="/admin" class="px-3.5 py-2 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-950 border border-slate-200 hover:border-slate-300 transition-colors">
-                CMS Login
+            <div class="flex items-center gap-2">
+              <a href="#contact" onclick="switchPortalTab('inquiry', 'Dealer Application')" class="inline-flex items-center h-11 px-5 rounded-full text-sm font-semibold bg-slate-950 hover:bg-[#0018FF] text-white transition-colors duration-200">
+                Dealer Inquiry
               </a>
-              <a href="#contact" onclick="switchPortalTab('inquiry', 'Dealer Application')" class="px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold bg-[#0018FF] hover:bg-blue-700 text-white transition-colors">
-                Partner / Dealer Inquiry
-              </a>
+              <button type="button" onclick="toggleMobileNav()" aria-label="Open menu" aria-controls="mobile-nav" aria-expanded="false" id="mobile-nav-toggle" class="xl:hidden inline-flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 text-slate-800 hover:bg-slate-50 transition-colors duration-200 cursor-pointer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </button>
             </div>
           </div>
+          <nav id="mobile-nav" class="hidden xl:hidden border-t border-slate-200 bg-white" aria-label="Mobile">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2 grid sm:grid-cols-2">
+              ${NAV_LINKS.map(n => `<a href="${n.href}" onclick="toggleMobileNav(false);${n.onclick || ''}" class="flex items-center min-h-[48px] px-2 text-[15px] font-medium text-slate-700 hover:text-[#0018FF] border-b border-slate-100 transition-colors duration-200">${n.label}</a>`).join('')}
+            </div>
+          </nav>
         </header>
 
-        <!-- MANUFACTURER FIRST-FOLD HERO: REALISTIC PHOTOGRAPHY & CORPORATE CAPABILITIES -->
-        <section class="bg-[#070B14] text-white border-b border-slate-800 pt-10 pb-14 lg:pt-14 lg:pb-20">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-              <!-- Left Column (5 Cols): Manufacturer Profile & Capabilities -->
-              <div class="lg:col-span-5 space-y-6">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-white/5 border border-white/10 text-xs font-mono text-blue-400">
-                  <span>MALAYSIAN OEM-GRADE MANUFACTURER • EST. 2017</span>
-                </div>
-
-                <h1 class="text-4xl sm:text-5xl font-bold font-heading tracking-tight text-white leading-[1.08]">
-                  Malaysia’s Premier Multi-Point Chassis Bar Manufacturer.
-                </h1>
-
-                <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
-                  From in-house CAD stress engineering and raw steel screening to CNC laser cutting, thermal induction forging, and electrostatic coating—TYPE ONE engineers and manufactures complete vehicle chassis-strengthening systems under one roof in Kuala Lumpur.
-                </p>
-
-                <!-- Manufacturer Core Credentials -->
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800">
-                    <div class="text-xs font-mono text-blue-400">IN-HOUSE PRODUCTION</div>
-                    <div class="text-sm font-bold text-white mt-0.5">Design, R&D to CNC Manufacturing</div>
-                  </div>
-                  <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800">
-                    <div class="text-xs font-mono text-red-400">INDUSTRIAL PATENT</div>
-                    <div class="text-sm font-bold text-white mt-0.5">Registered Design • 100% Bolt-On</div>
-                  </div>
-                </div>
-
-                <!-- Primary Corporate Actions -->
-                <div class="flex flex-wrap gap-3 pt-1">
-                  <a href="#blueprint-3d" class="px-5 py-3 rounded-xl bg-[#0018FF] hover:bg-blue-600 text-white font-semibold text-sm transition-colors">
-                    Interact with 3D Mounting Blueprint →
-                  </a>
-                  <a href="#engineering" class="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-700 font-semibold text-sm transition-colors">
-                    8-Stage Factory Process
-                  </a>
-                </div>
-
-                <!-- 4 Key Corporate Metrics -->
-                <div class="grid grid-cols-4 gap-3 pt-4 border-t border-slate-800/90">
-                  ${siteConfig.hero.stats.map(st => `
-                    <div>
-                      <div class="text-lg sm:text-xl font-bold text-white font-heading">${escapeHtml(st.value)}</div>
-                      <div class="text-[11px] text-slate-400 leading-tight mt-0.5">${escapeHtml(st.label)}</div>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- Right Column (7 Cols): Realistic Installed Underbody & Factory Showcase -->
-              <div id="hero-realistic-stage" class="lg:col-span-7">
-                ${buildHeroRealisticStageHtml()}
-              </div>
+        <!-- HERO: quiet, editorial first fold -->
+        <section id="top" class="relative bg-white border-b border-slate-200 overflow-hidden">
+          <div class="hero-grid absolute inset-0 pointer-events-none" aria-hidden="true"></div>
+          <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 sm:pt-28 sm:pb-20 lg:pt-36 lg:pb-24 text-center">
+            <div class="flex items-center justify-center gap-4 text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-slate-500">
+              <span class="hidden sm:block h-px w-10 bg-slate-300"></span>
+              <span>Est. ${escapeHtml(siteConfig.about?.establishedYear || '2017')} &nbsp;·&nbsp; Kuala Lumpur, Malaysia</span>
+              <span class="hidden sm:block h-px w-10 bg-slate-300"></span>
             </div>
+
+            <h1 class="mt-7 text-[2.5rem] leading-[1.06] sm:text-6xl lg:text-7xl font-semibold font-heading tracking-[-0.035em] text-slate-950">
+              Malaysia’s premier <span class="whitespace-nowrap">multi-point</span> chassis bar <span class="text-[#0018FF]">manufacturer.</span>
+            </h1>
+
+            <p class="mt-7 mx-auto max-w-2xl text-base sm:text-lg text-slate-600 leading-relaxed">
+              Engineered, forged and finished under one roof in Kuala Lumpur. Complete chassis-strengthening systems that bolt straight onto factory mounting points.
+            </p>
+
+            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+              <a href="#blueprint-3d" class="inline-flex items-center justify-center h-12 px-7 rounded-full bg-[#0018FF] hover:bg-[#0012c4] text-white font-semibold text-sm transition-colors duration-200">
+                Explore the 3D blueprint
+              </a>
+              <a href="#engineering" class="group inline-flex items-center gap-2 h-12 px-2 text-sm font-semibold text-slate-900 hover:text-[#0018FF] transition-colors duration-200">
+                See how it’s made
+                <svg class="transition-transform duration-200 group-hover:translate-x-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+            </div>
+
+            <dl class="mt-16 sm:mt-20 grid grid-cols-2 lg:grid-cols-4 border-t border-slate-200 text-left sm:text-center">
+              ${siteConfig.hero.stats.map((st, i) => `
+                <div class="py-6 px-1 sm:px-4 ${i % 2 ? 'pl-5 border-l border-slate-200' : ''} ${i >= 2 ? 'border-t lg:border-t-0 border-slate-200' : ''} ${i === 2 ? 'lg:border-l lg:pl-4' : ''}">
+                  <dd class="text-2xl sm:text-[1.75rem] font-semibold font-heading tracking-tight text-slate-950">${escapeHtml(st.value)}</dd>
+                  <dt class="mt-1 text-xs sm:text-[13px] text-slate-500">${escapeHtml(st.label)}</dt>
+                </div>
+              `).join('')}
+            </dl>
           </div>
         </section>
 
-        <!-- INTERACTIVE 3D STABLE BAR MOUNTING BLUEPRINT SECTION -->
-        <section id="blueprint-3d" class="py-16 lg:py-20 bg-[#051226] text-white border-b border-slate-800">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div>
-                <div class="text-xs font-mono uppercase tracking-widest text-amber-400 mb-1.5">
-                  INTERACTIVE 3D CAD MOUNTING BLUEPRINT • HOW IT WORKS & FITS
-                </div>
-                <h2 class="text-3xl sm:text-4xl font-bold font-heading text-white">
-                  3D Multi-Point Chassis Mounting Map
-                </h2>
-                <p class="text-slate-300 text-sm sm:text-base mt-1.5 max-w-3xl">
-                  Explore how all 6 TYPE ONE stable bars bolt onto the vehicle’s suspension towers, front/rear subframes, floorpan tunnel, and drop links. Click any numbered callout (1–6) or part in the right panel to fly the 3D camera directly to its mounting point.
-                </p>
-              </div>
-              <a
-                href="/blueprint"
-                target="_blank"
-                class="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-mono uppercase tracking-wider text-blue-200 border border-blue-400/30 transition-colors"
-              >
-                <span>Open Fullscreen 3D Blueprint ↗</span>
-              </a>
-            </div>
-
-            <div class="rounded-2xl overflow-hidden border border-blue-400/30 shadow-2xl bg-[#071a36]">
-              <iframe
-                src="/blueprint"
-                scrolling="no"
-                title="TYPE ONE 3D Stable Bar Mounting Blueprint"
-                class="w-full h-[760px] border-0 block"
-                loading="lazy"
-              ></iframe>
-            </div>
+        <!-- 3D STABLE BAR MOUNTING BLUEPRINT + INSTALLED PHOTOS -->
+        <section id="blueprint-3d" class="py-16 lg:py-24 bg-[#051226] text-white border-b border-slate-800">
+          <div id="blueprint-section-root" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            ${buildBlueprintSectionHtml()}
           </div>
         </section>
 

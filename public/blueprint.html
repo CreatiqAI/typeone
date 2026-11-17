@@ -183,9 +183,9 @@
       <button class="tg" id="tgSpin" aria-pressed="false">Auto-rotate</button>
     </div>
     <nav class="views" id="views" aria-label="Camera views">
-      <button data-view="iso" class="on">3/4</button>
+      <button data-view="iso">3/4</button>
       <button data-view="side">Side</button>
-      <button data-view="top">Top</button>
+      <button data-view="top" class="on">Top</button>
       <button data-view="front">Front</button>
       <button data-view="rear">Rear</button>
       <button data-view="under">Underside</button>
@@ -285,12 +285,12 @@ function select(i){
   three?.onSelect(i);
 }
 function peek(i,on){ three?.onPeek(i,on); }
-document.getElementById('reset').addEventListener('click',()=>{ select(-1); three?.goView('iso'); });
+document.getElementById('reset').addEventListener('click',()=>{ select(-1); three?.goView("top"); });
 addEventListener('keydown',e=>{
   if (e.target.closest('input,textarea')) return;
   const n = parseInt(e.key,10);
   if (n>=1 && n<=PARTS.length) select(n-1);
-  if (e.key==='Escape'){ select(-1); three?.goView('iso'); }
+  if (e.key==='Escape'){ select(-1); three?.goView("top"); }
 });
 
 /* =========================================================
@@ -797,7 +797,7 @@ function init3D(){
     camera.aspect=w/h; camera.updateProjectionMatrix();
   }
   new ResizeObserver(resize).observe(stage); resize();
-  camera.position.copy(fitDistance(VIEWS.iso.pos,VIEWS.iso.tgt));
+  camera.position.copy(fitDistance(VIEWS.top.pos,VIEWS.top.tgt)); controls.target.copy(VIEWS.top.tgt);
 
   const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
   renderer.setAnimationLoop(now=>{
