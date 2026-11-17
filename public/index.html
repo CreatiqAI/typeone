@@ -1791,16 +1791,18 @@
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-2 mb-6">
+            <div class="flex flex-wrap gap-2.5 mb-6" role="group" aria-label="Filter by car brand">
               ${allBrands.map(b => {
                 const active = state.selectedBrand.toLowerCase() === b.toLowerCase();
+                const logo = b === 'All' ? '' : (supportedBrands.find(sb => sb.name.toLowerCase() === b.toLowerCase())?.logo || '').replace(/(typeone\.com\.my\/wp-content\/uploads\/2024\/03\/[A-Za-z-]+)\.webp$/, '$1-300x169.webp');
                 return `
-                  <button type="button" onclick="setBrandFilter('${escapeHtml(b)}')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                  <button type="button" onclick="setBrandFilter('${escapeHtml(b)}')" aria-pressed="${active}" class="inline-flex items-center gap-2.5 h-11 ${logo ? 'pl-1.5' : 'pl-4'} pr-4 rounded-full text-[13px] font-medium border transition-colors duration-200 cursor-pointer ${
                     active
                       ? 'bg-slate-950 text-white border-slate-950'
                       : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
                   }">
-                    ${escapeHtml(b)}
+                    ${logo ? `<span class="flex items-center justify-center w-11 h-8 rounded-full bg-white overflow-hidden shrink-0"><img src="${escapeHtml(logo)}" alt="" loading="lazy" decoding="async" width="68" height="38" class="w-[68px] max-w-none h-auto" onerror="this.parentElement.remove()" /></span>` : ''}
+                    <span>${escapeHtml(b)}</span>
                   </button>
                 `;
               }).join('')}

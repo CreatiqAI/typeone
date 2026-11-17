@@ -360,7 +360,7 @@
   "supportedBrands": [
     {
       "name": "Honda",
-      "logo": "https://typeone.com.my/wp-content/uploads/2024/03/Toyota.webp",
+      "logo": "https://typeone.com.my/wp-content/uploads/2024/03/honda.webp",
       "vehicleCount": 42
     },
     {
@@ -380,22 +380,22 @@
     },
     {
       "name": "Jetour",
-      "logo": "https://typeone.com.my/wp-content/uploads/2024/03/Chery.webp",
+      "logo": "",
       "vehicleCount": 11
     },
     {
       "name": "Icaur",
-      "logo": "https://typeone.com.my/wp-content/uploads/2024/03/Chery.webp",
+      "logo": "",
       "vehicleCount": 8
     },
     {
       "name": "Denza",
-      "logo": "https://typeone.com.my/wp-content/uploads/2024/03/Tesla.webp",
+      "logo": "",
       "vehicleCount": 6
     },
     {
       "name": "Xpeng",
-      "logo": "https://typeone.com.my/wp-content/uploads/2024/03/Tesla.webp",
+      "logo": "",
       "vehicleCount": 6
     },
     {
@@ -415,7 +415,7 @@
     },
     {
       "name": "Daihatsu",
-      "logo": "https://typeone.com.my/wp-content/uploads/2024/03/Perodua.webp",
+      "logo": "",
       "vehicleCount": 9
     }
   ],

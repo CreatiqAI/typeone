@@ -265,11 +265,11 @@ export const INITIAL_CMS_DATA: CMSDatabase = {
     },
   ],
   supportedBrands: [
-    { name: 'Honda', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/Toyota.webp', vehicleCount: 42 },
+    { name: 'Honda', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/honda.webp', vehicleCount: 42 },
     { name: 'Toyota', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/Toyota.webp', vehicleCount: 38 },
     { name: 'Perodua', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/Perodua.webp', vehicleCount: 18 },
     { name: 'Proton', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/proton.webp', vehicleCount: 22 },
-    { name: 'Jetour', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/Chery.webp', vehicleCount: 11 },
+    { name: 'Jetour', logo: '', vehicleCount: 11 },
     { name: 'Chery', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/Chery.webp', vehicleCount: 14 },
     { name: 'BMW', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/BMW.webp', vehicleCount: 24 },
     { name: 'Mercedes', logo: 'https://typeone.com.my/wp-content/uploads/2024/03/Mercedes.webp', vehicleCount: 19 },
