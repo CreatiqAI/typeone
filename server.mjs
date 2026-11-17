@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderSubpage } from './src/lib/subpage.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +19,14 @@ const MIME_TYPES = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.json': 'application/json',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8',
+  '.woff2': 'font/woff2',
 };
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
 function getCMSData() {
   try {
@@ -54,17 +62,18 @@ function readBody(req) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
-  // Serve static files from /assets/
-  if (url.pathname.startsWith('/assets/')) {
-    const safeName = path.basename(url.pathname);
-    const assetPath = path.join(__dirname, 'public', 'assets', safeName);
-    if (fs.existsSync(assetPath)) {
-      const ext = path.extname(safeName).toLowerCase();
+  // Static files from public/ (any path with a file extension, kept inside public/)
+  if (path.extname(url.pathname) && !url.pathname.endsWith('.html')) {
+    let rel;
+    try { rel = decodeURIComponent(url.pathname); } catch { res.writeHead(400); res.end(); return; }
+    const filePath = path.resolve(PUBLIC_DIR, '.' + rel);
+    if (filePath.startsWith(PUBLIC_DIR + path.sep) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath).toLowerCase();
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
         'Cache-Control': 'public, max-age=3600',
       });
-      fs.createReadStream(assetPath).pipe(res);
+      fs.createReadStream(filePath).pipe(res);
       return;
     }
     res.writeHead(404);
@@ -239,10 +248,25 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Serve Public Enterprise Site at /
-  const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf-8');
-  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  res.end(indexHtml);
+  // Home page at /
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf-8');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(indexHtml);
+    return;
+  }
+
+  // Sub pages: /applications, /how-it-fits, /manufacturing, /about, /contact
+  const slug = url.pathname.replace(/^\/+|\/+$/g, '');
+  const subHtml = /^[a-z-]+$/.test(slug) ? renderSubpage(__dirname, slug) : null;
+  if (subHtml) {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(subHtml);
+    return;
+  }
+
+  res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end('<!doctype html><title>Page not found | TYPE ONE</title><p>This page does not exist. <a href="/">Go to the TYPE ONE home page</a>.</p>');
 });
 
 server.listen(PORT, () => {

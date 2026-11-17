@@ -1,0 +1,42 @@
+{
+  "applications": {
+    "title": "TYPE ONE stable bars by car make and model",
+    "description": "Find TYPE ONE strut bars, anti-roll bars and lower bars by car make, model and bar type, with the part code and material for each.",
+    "crumb": "Bars",
+    "h1": "Find bars for your car",
+    "intro": "Filter by car make, bar type or upgrade stage, or search by model or part code.",
+    "sections": ["catalog"]
+  },
+  "how-it-fits": {
+    "title": "Where TYPE ONE stable bars fit: 3D mounting guide",
+    "description": "See where each TYPE ONE bar bolts onto the chassis in a 3D model and in photos of real cars, and which bars to fit first.",
+    "crumb": "Fitting",
+    "h1": "Where each bar bolts on",
+    "intro": "Turn the 3D chassis to see the six bar positions, then see them fitted on real cars. The three upgrade stages show which bars to fit first.",
+    "sections": ["blueprint", "three-phase"]
+  },
+  "manufacturing": {
+    "title": "How TYPE ONE stable bars are made in Kuala Lumpur",
+    "description": "The eight production stages behind every TYPE ONE strut bar and solid anti-roll bar, from raw steel screening to powder coating and final checks.",
+    "crumb": "Factory",
+    "h1": "How our bars are made",
+    "intro": "Two production lines in Desa Aman, Kuala Lumpur: one for strut and lower bars, one for solid anti-roll bars. Each runs eight stages from raw steel to the final check.",
+    "sections": ["engineering"]
+  },
+  "about": {
+    "title": "About TYPE ONE: Malaysian stable bar maker since 2017",
+    "description": "TYPE ONE designs and makes chassis stable bars in Kuala Lumpur and sells them in 15 countries. Our vision, mission and export markets.",
+    "crumb": "About",
+    "h1": "About TYPE ONE",
+    "intro": "A Malaysian maker of chassis stable bars, founded in Kuala Lumpur in 2017 and now selling in 15 countries.",
+    "sections": ["vision-mission", "global-exports"]
+  },
+  "contact": {
+    "title": "Contact TYPE ONE: dealers, fitting and warranty",
+    "description": "Ask TYPE ONE about bars for your car, apply to become a dealer, or register the lifetime warranty on a bar you have fitted.",
+    "crumb": "Contact",
+    "h1": "Contact, dealers and warranty",
+    "intro": "Ask about bars for your car, apply to sell TYPE ONE, or register your lifetime warranty.",
+    "sections": ["contact"]
+  }
+}

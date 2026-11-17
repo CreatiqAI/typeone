@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /details.html
+
+Sitemap: https://typeone.com.my/sitemap.xml
