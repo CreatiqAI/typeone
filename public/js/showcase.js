@@ -279,7 +279,6 @@ async function start() {
     return { i, pivot, size, L, aL: Math.atan2(n.y, n.z), logoW: bb.max.x - bb.min.x, cap, section: steps[i], rail: rail[i] };
   });
   const introUI = section.querySelector('.sc-intro'), outroUI = section.querySelector('.sc-outro'), outroSec = section.querySelector('.sc-end');
-  rail.forEach((b, i) => { b.onclick = () => scrollTo({ top: sectionTop() + steps[i].offsetTop + steps[i].offsetHeight * 0.3, behavior: reduce ? 'auto' : 'smooth' }); });
   items.forEach((it) => { it.pivot.visible = true; });
   renderer.compile(scene, camera);
   items.forEach((it) => { it.pivot.visible = false; });
@@ -377,6 +376,78 @@ async function start() {
     rebuild(); dirty = true;
   }
   new ResizeObserver(() => { top0 = sectionTop(); applySize(); }).observe(stage); applySize();
+
+  /* ---------- one bar per step: wheel, swipe and keys move to the next part, never free scroll ----------
+     Stops: the intro, each part at its full pose (a third into its track, caption showing), the full set.
+     At the first stop scrolling up, or at the last scrolling down, the page scrolls on as normal. */
+  const stops = () => {
+    const top = sectionTop(), vh = stage.clientHeight;
+    return [top, ...steps.map((s) => top + s.offsetTop + s.offsetHeight * 0.3), top + section.offsetHeight - vh];
+  };
+  const nearest = (y, list) => list.reduce((b, s, i) => (Math.abs(s - y) < Math.abs(list[b] - y) ? i : b), 0);
+  let busy = false, cool = 0, idx = -1;
+  function tween(to, ms = 1100) {
+    busy = true;
+    const from = scrollY, t0 = performance.now();
+    const e = (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    return new Promise((done) => {
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / ms);
+        scrollTo(0, from + (to - from) * e(k));
+        if (k < 1) requestAnimationFrame(step);
+        else { busy = false; cool = performance.now() + 350; done(); }
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  function goTo(i) {
+    const list = stops();
+    idx = Math.max(0, Math.min(list.length - 1, i));
+    return tween(list[idx], Math.min(1400, 500 + Math.abs(list[idx] - scrollY) * 0.35));
+  }
+  // inside the pinned stretch (from the intro stop to the full-set stop, a little slack either side)
+  const inside = () => { const l = stops(); return scrollY >= l[0] - 4 && scrollY <= l[l.length - 1] + 4; };
+  // dir +1/-1: true when the gesture is taken by the showcase
+  function move(dir) {
+    if (!inside()) return false;
+    const list = stops(), here = nearest(scrollY, list);
+    const at = Math.abs(list[here] - scrollY) < 6 ? here : (dir > 0 ? list.findIndex((s) => s > scrollY) - 1 : list.findIndex((s) => s >= scrollY));
+    const next = at + dir;
+    if (next < 0 || next >= list.length) return false;   // past either end: let the page scroll on
+    if (busy || performance.now() < cool) return true;    // one bar per gesture: swallow the trackpad's tail
+    goTo(next);
+    return true;
+  }
+  addEventListener('wheel', (e) => {
+    if (e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+    if (busy || performance.now() < cool) { if (inside()) e.preventDefault(); return; }
+    if (Math.abs(e.deltaY) < 4) return;
+    if (move(Math.sign(e.deltaY))) e.preventDefault();
+  }, { passive: false });
+  let ty = null;
+  addEventListener('touchstart', (e) => { ty = e.touches[0].clientY; }, { passive: true });
+  addEventListener('touchmove', (e) => {
+    if (ty === null || !inside()) return;
+    const dy = ty - e.touches[0].clientY;
+    const l = stops(), here = nearest(scrollY, l);
+    const leaving = (dy < 0 && here === 0 && scrollY <= l[0] + 6) || (dy > 0 && here === l.length - 1 && scrollY >= l[l.length - 1] - 6);
+    if (!leaving) e.preventDefault();
+    if (Math.abs(dy) > 40 && !leaving) { ty = null; move(Math.sign(dy)); }
+  }, { passive: false });
+  addEventListener('touchend', () => { ty = null; });
+  addEventListener('keydown', (e) => {
+    if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;
+    const dir = { ArrowDown: 1, PageDown: 1, ' ': e.shiftKey ? -1 : 1, ArrowUp: -1, PageUp: -1 }[e.key];
+    if (dir && move(dir)) e.preventDefault();
+  });
+  // a scroll that ends between stops (scrollbar drag, find-in-page, a jump link) settles on the nearest bar
+  let settleT = 0;
+  addEventListener('scroll', () => {
+    if (busy) return;
+    clearTimeout(settleT);
+    settleT = setTimeout(() => { if (!busy && inside()) { const l = stops(), n = nearest(scrollY, l); if (Math.abs(l[n] - scrollY) > 6) goTo(n); } }, 180);
+  }, { passive: true });
+  rail.forEach((b, i) => { b.onclick = () => goTo(i + 1); });
 
   /* draw only while the section is on screen */
   const loop = (now) => {
